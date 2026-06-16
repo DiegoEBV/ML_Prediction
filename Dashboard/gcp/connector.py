@@ -2,6 +2,11 @@
 """
 GCP BigQuery connector — arquitectura medallion Bronze / Silver / Gold
 Proyecto: 413462127752 | Dataset: mlaldimi
+
+Autenticacion (en orden de prioridad):
+  1. Variable GOOGLE_APPLICATION_CREDENTIALS apuntando al JSON de service account
+  2. Archivo secrets/gcp_service_account.json junto a este modulo
+  3. Application Default Credentials (gcloud auth application-default login)
 """
 
 import os
@@ -11,7 +16,7 @@ from typing import Optional
 
 import pandas as pd
 
-GCP_PROJECT   = "mlaldimi"
+GCP_PROJECT    = "mlaldimi"
 GCP_PROJECT_ID = "413462127752"
 DATASET_ID     = "mlaldimi"
 
@@ -22,7 +27,39 @@ TABLE_SILVER_LOGISTICA = f"{GCP_PROJECT}.{DATASET_ID}.silver_logistica"
 TABLE_GOLD_SALUD       = f"{GCP_PROJECT}.{DATASET_ID}.gold_salud"
 TABLE_GOLD_LOGISTICA   = f"{GCP_PROJECT}.{DATASET_ID}.gold_logistica"
 
+# Ruta al JSON de service account junto a este archivo
+_SA_FILE = os.path.join(os.path.dirname(__file__), "secrets", "gcp_service_account.json")
+
 _BQ_CLIENT = None
+
+
+def _resolve_credentials():
+    """
+    Resuelve credenciales GCP en orden de prioridad:
+      1. GOOGLE_APPLICATION_CREDENTIALS (variable de entorno)
+      2. gcp/secrets/gcp_service_account.json
+      3. Application Default Credentials (ADC)
+    Devuelve (credentials_obj | None, error_str | None)
+    """
+    # 1. Variable de entorno ya configurada -> BigQuery la usará automáticamente
+    env_creds = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+    if env_creds and os.path.exists(env_creds):
+        return None, None  # bigquery.Client() la tomará solo
+
+    # 2. Archivo local secrets/
+    if os.path.exists(_SA_FILE):
+        try:
+            from google.oauth2 import service_account
+            creds = service_account.Credentials.from_service_account_file(
+                _SA_FILE,
+                scopes=["https://www.googleapis.com/auth/bigquery"],
+            )
+            return creds, None
+        except Exception as e:
+            return None, f"Error cargando service account: {e}"
+
+    # 3. ADC (funciona si ya se ejecutó `gcloud auth application-default login`)
+    return None, None
 
 
 def _get_client():
@@ -31,12 +68,25 @@ def _get_client():
         return _BQ_CLIENT, None
     try:
         from google.cloud import bigquery
-        _BQ_CLIENT = bigquery.Client(project=GCP_PROJECT)
+        creds, err = _resolve_credentials()
+        if err:
+            return None, err
+        _BQ_CLIENT = bigquery.Client(project=GCP_PROJECT, credentials=creds)
         return _BQ_CLIENT, None
     except ImportError:
         return None, "google-cloud-bigquery no instalado. Ejecuta: pip install google-cloud-bigquery"
     except Exception as e:
         return None, str(e)
+
+
+def get_auth_method() -> str:
+    """Devuelve descripcion del metodo de autenticacion activo."""
+    env_creds = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+    if env_creds and os.path.exists(env_creds):
+        return f"Service Account via GOOGLE_APPLICATION_CREDENTIALS: {env_creds}"
+    if os.path.exists(_SA_FILE):
+        return f"Service Account via archivo local: {_SA_FILE}"
+    return "Application Default Credentials (ADC / gcloud)"
 
 
 def check_connection() -> tuple[bool, str]:
@@ -45,7 +95,7 @@ def check_connection() -> tuple[bool, str]:
         return False, err
     try:
         list(client.list_datasets())
-        return True, "Conectado a GCP BigQuery"
+        return True, f"Conectado a GCP BigQuery ({GCP_PROJECT_ID}) | {get_auth_method()}"
     except Exception as e:
         return False, f"Error de conexion: {e}"
 
@@ -55,41 +105,41 @@ def check_connection() -> tuple[bool, str]:
 # ─────────────────────────────────────────────
 
 SCHEMA_BRONZE_SALUD = [
-    {"name": "ingestion_ts",       "type": "TIMESTAMP"},
-    {"name": "source",             "type": "STRING"},
-    {"name": "Patient_ID",         "type": "STRING"},
-    {"name": "Age",                "type": "FLOAT64"},
-    {"name": "Gender",             "type": "STRING"},
-    {"name": "Country_Region",     "type": "STRING"},
-    {"name": "Year",               "type": "INTEGER"},
-    {"name": "Genetic_Risk",       "type": "FLOAT64"},
-    {"name": "Air_Pollution",      "type": "FLOAT64"},
-    {"name": "Alcohol_Use",        "type": "FLOAT64"},
-    {"name": "Smoking",            "type": "FLOAT64"},
-    {"name": "Obesity_Level",      "type": "FLOAT64"},
-    {"name": "Cancer_Type",        "type": "STRING"},
-    {"name": "Cancer_Stage",       "type": "STRING"},
-    {"name": "Treatment_Cost_USD", "type": "FLOAT64"},
-    {"name": "Survival_Years",     "type": "FLOAT64"},
+    {"name": "ingestion_ts",          "type": "TIMESTAMP"},
+    {"name": "source",                "type": "STRING"},
+    {"name": "Patient_ID",            "type": "STRING"},
+    {"name": "Age",                   "type": "FLOAT64"},
+    {"name": "Gender",                "type": "STRING"},
+    {"name": "Country_Region",        "type": "STRING"},
+    {"name": "Year",                  "type": "INTEGER"},
+    {"name": "Genetic_Risk",          "type": "FLOAT64"},
+    {"name": "Air_Pollution",         "type": "FLOAT64"},
+    {"name": "Alcohol_Use",           "type": "FLOAT64"},
+    {"name": "Smoking",               "type": "FLOAT64"},
+    {"name": "Obesity_Level",         "type": "FLOAT64"},
+    {"name": "Cancer_Type",           "type": "STRING"},
+    {"name": "Cancer_Stage",          "type": "STRING"},
+    {"name": "Treatment_Cost_USD",    "type": "FLOAT64"},
+    {"name": "Survival_Years",        "type": "FLOAT64"},
     {"name": "Target_Severity_Score", "type": "FLOAT64"},
 ]
 
 SCHEMA_BRONZE_LOGISTICA = [
-    {"name": "ingestion_ts",       "type": "TIMESTAMP"},
-    {"name": "source",             "type": "STRING"},
-    {"name": "date",               "type": "DATE"},
-    {"name": "store_nbr",          "type": "INTEGER"},
-    {"name": "family",             "type": "STRING"},
-    {"name": "unit_sales",         "type": "FLOAT64"},
-    {"name": "onpromotion",        "type": "BOOLEAN"},
-    {"name": "city",               "type": "STRING"},
-    {"name": "state",              "type": "STRING"},
-    {"name": "store_type",         "type": "STRING"},
-    {"name": "cluster",            "type": "INTEGER"},
-    {"name": "dcoilwtico",         "type": "FLOAT64"},
-    {"name": "holiday_type",       "type": "STRING"},
-    {"name": "transferred",        "type": "BOOLEAN"},
-    {"name": "n_transactions",     "type": "FLOAT64"},
+    {"name": "ingestion_ts",    "type": "TIMESTAMP"},
+    {"name": "source",          "type": "STRING"},
+    {"name": "date",            "type": "DATE"},
+    {"name": "store_nbr",       "type": "INTEGER"},
+    {"name": "family",          "type": "STRING"},
+    {"name": "unit_sales",      "type": "FLOAT64"},
+    {"name": "onpromotion",     "type": "BOOLEAN"},
+    {"name": "city",            "type": "STRING"},
+    {"name": "state",           "type": "STRING"},
+    {"name": "store_type",      "type": "STRING"},
+    {"name": "cluster",         "type": "INTEGER"},
+    {"name": "dcoilwtico",      "type": "FLOAT64"},
+    {"name": "holiday_type",    "type": "STRING"},
+    {"name": "transferred",     "type": "BOOLEAN"},
+    {"name": "n_transactions",  "type": "FLOAT64"},
 ]
 
 
@@ -97,12 +147,12 @@ def _bq_schema(schema_list):
     try:
         from google.cloud import bigquery
         type_map = {
-            "STRING": bigquery.enums.SqlTypeNames.STRING,
-            "FLOAT64": bigquery.enums.SqlTypeNames.FLOAT64,
-            "INTEGER": bigquery.enums.SqlTypeNames.INT64,
-            "TIMESTAMP": bigquery.enums.SqlTypeNames.TIMESTAMP,
-            "BOOLEAN": bigquery.enums.SqlTypeNames.BOOL,
-            "DATE": bigquery.enums.SqlTypeNames.DATE,
+            "STRING":    "STRING",
+            "FLOAT64":   "FLOAT64",
+            "INTEGER":   "INT64",
+            "TIMESTAMP": "TIMESTAMP",
+            "BOOLEAN":   "BOOL",
+            "DATE":      "DATE",
         }
         return [bigquery.SchemaField(f["name"], type_map.get(f["type"], "STRING"))
                 for f in schema_list]
@@ -129,7 +179,8 @@ def _ensure_table(client, table_id: str, schema_list: list):
 # UPLOAD FUNCTIONS
 # ─────────────────────────────────────────────
 
-def upload_bronze_salud(df: pd.DataFrame, source: str = "manual") -> tuple[bool, str]:
+def _upload(df: pd.DataFrame, table_id: str, schema_list: list,
+            write_disposition: str, source: str = "") -> tuple[bool, str]:
     client, err = _get_client()
     if err:
         return False, err
@@ -137,104 +188,42 @@ def upload_bronze_salud(df: pd.DataFrame, source: str = "manual") -> tuple[bool,
         from google.cloud import bigquery
         df = df.copy()
         df["ingestion_ts"] = datetime.datetime.utcnow().isoformat()
-        df["source"]       = source
-        if "Patient_ID" not in df.columns:
-            df["Patient_ID"] = [f"P{i:06d}" for i in range(len(df))]
-        err2 = _ensure_table(client, TABLE_BRONZE_SALUD, SCHEMA_BRONZE_SALUD)
-        if err2:
-            return False, err2
-        job_config = bigquery.LoadJobConfig(write_disposition="WRITE_APPEND")
-        job = client.load_table_from_dataframe(df, TABLE_BRONZE_SALUD, job_config=job_config)
+        if source:
+            df["source"] = source
+        _ensure_table(client, table_id, schema_list)
+        job_cfg = bigquery.LoadJobConfig(write_disposition=write_disposition)
+        job = client.load_table_from_dataframe(df, table_id, job_config=job_cfg)
         job.result()
-        return True, f"{len(df)} filas cargadas a Bronze Salud"
+        return True, f"{len(df):,} filas → {table_id}"
     except Exception as e:
         return False, str(e)
+
+
+def upload_bronze_salud(df: pd.DataFrame, source: str = "manual") -> tuple[bool, str]:
+    if "Patient_ID" not in df.columns:
+        df = df.copy()
+        df["Patient_ID"] = [f"P{i:06d}" for i in range(len(df))]
+    return _upload(df, TABLE_BRONZE_SALUD, SCHEMA_BRONZE_SALUD, "WRITE_APPEND", source)
 
 
 def upload_bronze_logistica(df: pd.DataFrame, source: str = "manual") -> tuple[bool, str]:
-    client, err = _get_client()
-    if err:
-        return False, err
-    try:
-        from google.cloud import bigquery
-        df = df.copy()
-        df["ingestion_ts"] = datetime.datetime.utcnow().isoformat()
-        df["source"]       = source
-        err2 = _ensure_table(client, TABLE_BRONZE_LOGISTICA, SCHEMA_BRONZE_LOGISTICA)
-        if err2:
-            return False, err2
-        job_config = bigquery.LoadJobConfig(write_disposition="WRITE_APPEND")
-        job = client.load_table_from_dataframe(df, TABLE_BRONZE_LOGISTICA, job_config=job_config)
-        job.result()
-        return True, f"{len(df)} filas cargadas a Bronze Logistica"
-    except Exception as e:
-        return False, str(e)
+    return _upload(df, TABLE_BRONZE_LOGISTICA, SCHEMA_BRONZE_LOGISTICA, "WRITE_APPEND", source)
 
 
 def upload_silver_salud(df: pd.DataFrame) -> tuple[bool, str]:
-    client, err = _get_client()
-    if err:
-        return False, err
-    try:
-        from google.cloud import bigquery
-        df = df.copy()
-        df["ingestion_ts"] = datetime.datetime.utcnow().isoformat()
-        df["source"]       = "silver_transform"
-        job_config = bigquery.LoadJobConfig(write_disposition="WRITE_TRUNCATE")
-        job = client.load_table_from_dataframe(df, TABLE_SILVER_SALUD, job_config=job_config)
-        job.result()
-        return True, f"Silver Salud actualizado ({len(df)} filas)"
-    except Exception as e:
-        return False, str(e)
+    return _upload(df, TABLE_SILVER_SALUD, [], "WRITE_TRUNCATE", "silver_transform")
 
 
 def upload_silver_logistica(df: pd.DataFrame) -> tuple[bool, str]:
-    client, err = _get_client()
-    if err:
-        return False, err
-    try:
-        from google.cloud import bigquery
-        df = df.copy()
-        df["ingestion_ts"] = datetime.datetime.utcnow().isoformat()
-        df["source"]       = "silver_transform"
-        job_config = bigquery.LoadJobConfig(write_disposition="WRITE_TRUNCATE")
-        job = client.load_table_from_dataframe(df, TABLE_SILVER_LOGISTICA, job_config=job_config)
-        job.result()
-        return True, f"Silver Logistica actualizado ({len(df)} filas)"
-    except Exception as e:
-        return False, str(e)
+    return _upload(df, TABLE_SILVER_LOGISTICA, [], "WRITE_TRUNCATE", "silver_transform")
 
 
 def upload_gold_salud(df: pd.DataFrame) -> tuple[bool, str]:
-    client, err = _get_client()
-    if err:
-        return False, err
-    try:
-        from google.cloud import bigquery
-        df = df.copy()
-        df["ingestion_ts"] = datetime.datetime.utcnow().isoformat()
-        job_config = bigquery.LoadJobConfig(write_disposition="WRITE_TRUNCATE")
-        job = client.load_table_from_dataframe(df, TABLE_GOLD_SALUD, job_config=job_config)
-        job.result()
-        return True, f"Gold Salud listo para entrenamiento ({len(df)} filas)"
-    except Exception as e:
-        return False, str(e)
+    return _upload(df, TABLE_GOLD_SALUD, [], "WRITE_TRUNCATE")
 
 
 def upload_gold_logistica(df: pd.DataFrame) -> tuple[bool, str]:
-    client, err = _get_client()
-    if err:
-        return False, err
-    try:
-        from google.cloud import bigquery
-        df = df.copy()
-        df["ingestion_ts"] = datetime.datetime.utcnow().isoformat()
-        job_config = bigquery.LoadJobConfig(write_disposition="WRITE_TRUNCATE")
-        job = client.load_table_from_dataframe(df, TABLE_GOLD_LOGISTICA, job_config=job_config)
-        job.result()
-        return True, f"Gold Logistica listo para entrenamiento ({len(df)} filas)"
-    except Exception as e:
-        return False, str(e)
+    return _upload(df, TABLE_GOLD_LOGISTICA, [], "WRITE_TRUNCATE")
 
 
 def read_gold_salud() -> tuple[Optional[pd.DataFrame], str]:
@@ -242,9 +231,8 @@ def read_gold_salud() -> tuple[Optional[pd.DataFrame], str]:
     if err:
         return None, err
     try:
-        query = f"SELECT * FROM `{TABLE_GOLD_SALUD}` LIMIT 100000"
-        df    = client.query(query).to_dataframe()
-        return df, f"{len(df)} filas leidas de Gold Salud"
+        df = client.query(f"SELECT * FROM `{TABLE_GOLD_SALUD}` LIMIT 100000").to_dataframe()
+        return df, f"{len(df):,} filas leidas de {TABLE_GOLD_SALUD}"
     except Exception as e:
         return None, str(e)
 
@@ -254,8 +242,7 @@ def read_gold_logistica() -> tuple[Optional[pd.DataFrame], str]:
     if err:
         return None, err
     try:
-        query = f"SELECT * FROM `{TABLE_GOLD_LOGISTICA}` LIMIT 500000"
-        df    = client.query(query).to_dataframe()
-        return df, f"{len(df)} filas leidas de Gold Logistica"
+        df = client.query(f"SELECT * FROM `{TABLE_GOLD_LOGISTICA}` LIMIT 500000").to_dataframe()
+        return df, f"{len(df):,} filas leidas de {TABLE_GOLD_LOGISTICA}"
     except Exception as e:
         return None, str(e)
