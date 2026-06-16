@@ -1,0 +1,83 @@
+{
+  "features": [
+    "lag_1",
+    "lag_7",
+    "lag_14",
+    "media_7d",
+    "media_14d",
+    "std_7d",
+    "log_unit_sales",
+    "onpromotion",
+    "dcoilwtico_scaled",
+    "n_transactions_scaled",
+    "es_festivo",
+    "dia_semana",
+    "es_finde",
+    "mes",
+    "semana_anio",
+    "anio",
+    "trimestre",
+    "store_type_enc",
+    "family_enc",
+    "city_enc",
+    "cluster"
+  ],
+  "mejor_reg": "Ridge",
+  "mejor_cls": "XGBoost",
+  "corte": "2013-03-31 00:00:00",
+  "resultados_reg": [
+    {
+      "Modelo": "Ridge",
+      "Target": "demand7",
+      "WAPE%": 16.98,
+      "R2": 0.9224
+    },
+    {
+      "Modelo": "LightGBM",
+      "Target": "demand7",
+      "WAPE%": 18.13,
+      "R2": 0.9123
+    },
+    {
+      "Modelo": "XGBoost",
+      "Target": "demand7",
+      "WAPE%": 18.19,
+      "R2": 0.9117
+    },
+    {
+      "Modelo": "Ridge",
+      "Target": "demand14",
+      "WAPE%": 14.98,
+      "R2": 0.9377
+    },
+    {
+      "Modelo": "LightGBM",
+      "Target": "demand14",
+      "WAPE%": 16.17,
+      "R2": 0.927
+    },
+    {
+      "Modelo": "XGBoost",
+      "Target": "demand14",
+      "WAPE%": 16.22,
+      "R2": 0.9266
+    }
+  ],
+  "resultados_cls": [
+    {
+      "Modelo": "Logistica",
+      "Accuracy": 0.7116,
+      "AUC": 0.6355
+    },
+    {
+      "Modelo": "LightGBM",
+      "Accuracy": 1.0,
+      "AUC": 1.0
+    },
+    {
+      "Modelo": "XGBoost",
+      "Accuracy": 1.0,
+      "AUC": 1.0
+    }
+  ]
+}
