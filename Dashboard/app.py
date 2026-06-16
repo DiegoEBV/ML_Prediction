@@ -395,6 +395,100 @@ def wape(real, pred):
     return float(np.sum(np.abs(np.array(real) - np.array(pred))) / (np.sum(np.abs(np.array(real))) + 1e-8))
 
 
+def _render_gcp_credentials_panel():
+    """Panel de configuracion de credenciales GCP — reutilizable en ambos modulos."""
+    import os
+    sa_path = os.path.join(os.path.dirname(__file__), "gcp", "secrets", "gcp_service_account.json")
+    env_var  = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+
+    with st.expander("Configuracion de Credenciales GCP", expanded=not HAS_GCP):
+        st.markdown("""
+        <div style="background:#f0fdfa;border-radius:10px;padding:16px 20px;border:1.5px solid #6ee7b7;margin-bottom:12px;">
+        <b style="color:#0f766e;">Metodos de autenticacion (se prueban en orden)</b>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Metodo 1 — variable de entorno
+        env_ok = bool(env_var and os.path.exists(env_var))
+        st.markdown(
+            f'<div style="margin:6px 0;padding:10px 14px;background:#f8fafc;border-radius:8px;'
+            f'border-left:4px solid {"#22c55e" if env_ok else "#cbd5e1"};">'
+            f'<b>1. GOOGLE_APPLICATION_CREDENTIALS</b><br>'
+            f'<span style="font-size:0.82rem;color:#475569;">'
+            f'{"✓ Configurada: " + env_var if env_ok else "✗ No configurada"}'
+            f'</span></div>',
+            unsafe_allow_html=True,
+        )
+
+        # Metodo 2 — archivo local
+        sa_ok = os.path.exists(sa_path)
+        st.markdown(
+            f'<div style="margin:6px 0;padding:10px 14px;background:#f8fafc;border-radius:8px;'
+            f'border-left:4px solid {"#22c55e" if sa_ok else "#cbd5e1"};">'
+            f'<b>2. Archivo local</b>: <code>gcp/secrets/gcp_service_account.json</code><br>'
+            f'<span style="font-size:0.82rem;color:#475569;">'
+            f'{"✓ Archivo encontrado" if sa_ok else "✗ No encontrado — ver instrucciones abajo"}'
+            f'</span></div>',
+            unsafe_allow_html=True,
+        )
+
+        # Metodo 3 — ADC
+        st.markdown(
+            '<div style="margin:6px 0;padding:10px 14px;background:#f8fafc;border-radius:8px;border-left:4px solid #cbd5e1;">'
+            '<b>3. Application Default Credentials (ADC)</b><br>'
+            '<span style="font-size:0.82rem;color:#475569;">'
+            'Ejecutar: <code>gcloud auth application-default login</code>'
+            '</span></div>',
+            unsafe_allow_html=True,
+        )
+
+        st.markdown("---")
+        st.markdown("#### Como configurar el Service Account")
+        st.markdown("""
+1. Abre [GCP Console → IAM → Service Accounts](https://console.cloud.google.com/iam-admin/serviceaccounts?project=mlaldimi)
+2. Proyecto: **mlaldimi** (ID: `413462127752`)
+3. Crea o selecciona una Service Account con los roles:
+   - `BigQuery Data Editor`
+   - `BigQuery Job User`
+4. Ve a **Claves** → **Agregar clave** → **JSON**
+5. Descarga el archivo y renombralo a **`gcp_service_account.json`**
+6. Coloca el archivo en: `Dashboard/gcp/secrets/gcp_service_account.json`
+        """)
+
+        # Upload directo desde el dashboard
+        st.markdown("#### O sube el archivo directamente aqui")
+        uploaded_sa = st.file_uploader(
+            "Sube tu archivo JSON de service account",
+            type=["json"], key="sa_uploader"
+        )
+        if uploaded_sa:
+            try:
+                sa_content = json.load(uploaded_sa)
+                required = {"type", "project_id", "private_key", "client_email"}
+                if required.issubset(sa_content.keys()) and sa_content.get("type") == "service_account":
+                    os.makedirs(os.path.dirname(sa_path), exist_ok=True)
+                    with open(sa_path, "w") as f:
+                        json.dump(sa_content, f, indent=2)
+                    # Resetear cliente para forzar re-autenticacion
+                    import gcp.connector as _conn
+                    _conn._BQ_CLIENT = None
+                    st.success(f"Service account guardada en {sa_path}. Presiona 'Verificar conexion GCP' en la barra lateral.")
+                else:
+                    st.error("El archivo no parece un service account JSON valido de GCP.")
+            except Exception as e:
+                st.error(f"Error al procesar el archivo: {e}")
+
+        # Variable de entorno manual
+        st.markdown("#### O configura la variable de entorno")
+        st.code('export GOOGLE_APPLICATION_CREDENTIALS="/ruta/completa/a/gcp_service_account.json"', language="bash")
+        st.markdown("Luego reinicia el servidor Streamlit para que tome efecto.")
+
+        if not HAS_GCP:
+            st.markdown("---")
+            st.markdown("#### google-cloud-bigquery no instalado")
+            st.code("pip install google-cloud-bigquery google-cloud-bigquery-storage pyarrow db-dtypes", language="bash")
+
+
 # ══════════════════════════════════════════════════════════════
 # KPI EXPORT
 # ══════════════════════════════════════════════════════════════
@@ -566,6 +660,15 @@ def page_developer():
         st.markdown("**ID:** 413462127752")
         st.markdown("**Dataset:** mlaldimi")
         if HAS_GCP:
+            # Mostrar metodo de auth activo
+            try:
+                from gcp.connector import get_auth_method
+                auth_method = get_auth_method()
+                short = auth_method[:45] + "..." if len(auth_method) > 45 else auth_method
+                st.markdown(f'<div style="font-size:0.75rem;color:#99f6e4;margin-bottom:6px;">{short}</div>',
+                            unsafe_allow_html=True)
+            except Exception:
+                pass
             if st.button("Verificar conexion GCP", key="check_gcp"):
                 ok, msg = check_connection()
                 st.session_state.gcp_status = (ok, msg)
@@ -574,10 +677,10 @@ def page_developer():
 
         if st.session_state.gcp_status:
             ok, msg = st.session_state.gcp_status
-            if ok:
-                st.markdown(f'<div style="color:#22c55e;font-size:0.82rem;">✓ {msg}</div>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div style="color:#ef4444;font-size:0.82rem;">✗ {msg}</div>', unsafe_allow_html=True)
+            color = "#22c55e" if ok else "#ef4444"
+            icon  = "✓" if ok else "✗"
+            st.markdown(f'<div style="color:{color};font-size:0.8rem;word-break:break-word;">{icon} {msg}</div>',
+                        unsafe_allow_html=True)
 
     st.markdown(f"""
     <div class="dev-header">
@@ -729,6 +832,8 @@ def _dev_logistica():
     # ── TAB GCP ────────────────────────────────────────────────
     with tab_gcp:
         st.markdown('<div class="dev-section-title">Sincronizacion con GCP BigQuery — mlaldimi</div>', unsafe_allow_html=True)
+
+        _render_gcp_credentials_panel()
 
         st.markdown("""
         <div class="gcp-card">
@@ -1087,6 +1192,8 @@ def _dev_salud():
     # ── TAB GCP ────────────────────────────────────────────────
     with tab_gcp:
         st.markdown('<div class="dev-section-title">Sincronizacion GCP — Salud</div>', unsafe_allow_html=True)
+
+        _render_gcp_credentials_panel()
 
         c1, c2, c3 = st.columns(3)
         for col, tier, color, table, desc in [

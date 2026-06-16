@@ -1,3 +1,11 @@
 *.csv
 *.pkl
 .env
+
+# Credenciales GCP — nunca commitear
+Dashboard/gcp/secrets/gcp_service_account.json
+**/secrets/*.json
+!**/secrets/*.json.template
+
+# Exports locales
+Dashboard/kpi_exports/
