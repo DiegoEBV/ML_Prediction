@@ -169,6 +169,7 @@ def find_csv(pattern):
     """Busca .csv o .txt por nombre parcial en varias carpetas del repo."""
     search_dirs = [
         ROOT,
+        ROOT / "data",
         ROOT / "Dashboard" / "data",
         ROOT / "Dashboard",
         Path("."),
