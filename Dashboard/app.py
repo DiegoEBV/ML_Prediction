@@ -27,10 +27,16 @@ from sklearn.metrics import (
 )
 
 try:
-    from xgboost import XGBClassifier
+    from xgboost import XGBClassifier, XGBRegressor
     HAS_XGB = True
 except ImportError:
     HAS_XGB = False
+
+try:
+    from lightgbm import LGBMRegressor
+    HAS_LGB = True
+except ImportError:
+    HAS_LGB = False
 
 try:
     from gcp.connector import (
@@ -540,6 +546,203 @@ def _sync_models_from_gcs():
         return results
     except Exception:
         return []
+
+
+# ══════════════════════════════════════════════════════════════
+# RETRAINING FUNCTIONS
+# ══════════════════════════════════════════════════════════════
+def retrain_salud() -> tuple[bool, str]:
+    """Lee Gold (BQ o CSV local), reentrena modelos de salud, guarda PKL y sube a GCS."""
+    # 1. Obtener datos
+    df = None
+    fuente = ""
+    if HAS_GCP:
+        try:
+            df_gcp, msg = read_gold_salud()
+            if df_gcp is not None and len(df_gcp) > 100:
+                df = df_gcp; fuente = f"Gold BigQuery ({len(df):,} filas)"
+        except Exception:
+            pass
+    if df is None:
+        for p in [LOCAL_CSV, LOCAL_TXT]:
+            if os.path.exists(p):
+                df = pd.read_csv(p, low_memory=False)
+                fuente = f"CSV local ({len(df):,} filas)"
+                break
+    if df is None:
+        return False, "Sin datos: sube el CSV a Gold BigQuery o coloca el archivo en Dashboard/data/"
+
+    # 2. Feature engineering
+    try:
+        df = df.copy()
+        df = df.drop(columns=["Patient_ID","ingestion_ts","source"], errors="ignore")
+        df["Cancer_Stage"] = df["Cancer_Stage"].map(STAGE_MAP)
+        df = pd.get_dummies(df, drop_first=True)
+        df["Severity_Class"] = pd.cut(df["Target_Severity_Score"], bins=[0,3,7,10], labels=[0,1,2])
+        X = df.drop(columns=["Target_Severity_Score","Severity_Class"])
+        y = df["Severity_Class"].astype(int)
+    except Exception as e:
+        return False, f"Error preparando features: {e}"
+
+    # 3. Entrenar
+    scaler = StandardScaler()
+    X_sc   = scaler.fit_transform(X)
+    X_tr, X_te, y_tr, y_te = train_test_split(X_sc, y, test_size=0.3, random_state=42, stratify=y)
+
+    models_trained = {}
+    rf = RandomForestClassifier(n_estimators=200, max_depth=15, random_state=42, n_jobs=-1)
+    rf.fit(X_tr, y_tr); models_trained["RF"] = rf
+
+    mlp = MLPClassifier(hidden_layer_sizes=(64,32,16), max_iter=500, random_state=42,
+                        early_stopping=True, validation_fraction=0.1)
+    mlp.fit(X_tr, y_tr); models_trained["MLP"] = mlp
+
+    if HAS_XGB:
+        xgb = XGBClassifier(n_estimators=200, max_depth=6, learning_rate=0.1,
+                             eval_metric="mlogloss", random_state=42, verbosity=0)
+        xgb.fit(X_tr, y_tr); models_trained["XGB"] = xgb
+
+    # 4. Guardar PKL
+    os.makedirs("models", exist_ok=True)
+    pkl_map = {
+        "models/xgb_salud.pkl":          models_trained.get("XGB"),
+        "models/rf_salud.pkl":            models_trained.get("RF"),
+        "models/mlp_salud.pkl":           models_trained.get("MLP"),
+        "models/scaler_salud.pkl":        scaler,
+        "models/feature_cols_salud.pkl":  X.columns.tolist(),
+    }
+    for path, obj in pkl_map.items():
+        if obj is not None:
+            with open(path, "wb") as f:
+                pickle.dump(obj, f)
+
+    # 5. Subir a GCS
+    gcs_msg = ""
+    if HAS_GCP:
+        try:
+            results = upload_all_models("models")
+            n_ok = sum(1 for _, ok, _ in results if ok)
+            gcs_msg = f" | {n_ok} PKL → GCS"
+        except Exception as e:
+            gcs_msg = f" | GCS error: {e}"
+
+    # 6. Limpiar cache
+    load_and_train_salud.clear()
+
+    acc = accuracy_score(y_te, models_trained[max(models_trained, key=lambda k: accuracy_score(y_te, models_trained[k].predict(X_te)))].predict(X_te))
+    return True, f"Salud reentrenado · fuente: {fuente} · mejor Acc: {acc:.4f}{gcs_msg}"
+
+
+def retrain_logistica() -> tuple[bool, str]:
+    """Lee Gold (BQ o CSV local), reentrena modelos de logística, guarda PKL y sube a GCS."""
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.preprocessing import LabelEncoder
+
+    # 1. Obtener datos
+    df = None
+    fuente = ""
+    if HAS_GCP:
+        try:
+            df_gcp, msg = read_gold_logistica()
+            if df_gcp is not None and len(df_gcp) > 100:
+                df = df_gcp; fuente = f"Gold BigQuery ({len(df):,} filas)"
+        except Exception:
+            pass
+    if df is None:
+        local_log = os.path.join("data", "favorita_aldimi_limpio.csv")
+        if os.path.exists(local_log):
+            df = pd.read_csv(local_log, low_memory=False)
+            fuente = f"CSV local ({len(df):,} filas)"
+    if df is None:
+        return False, "Sin datos: sube el CSV a Gold BigQuery o coloca favorita_aldimi_limpio.csv en Dashboard/data/"
+
+    df = df.copy()
+    df = df.drop(columns=["ingestion_ts","source"], errors="ignore")
+
+    # 2. Codificar categorías si necesario
+    for col in ["family","city","state","store_type","type"]:
+        if col in df.columns and df[col].dtype == object:
+            le = LabelEncoder()
+            df[col] = le.fit_transform(df[col].astype(str))
+    if "date" in df.columns:
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
+        df["dia_semana"]   = df["date"].dt.dayofweek
+        df["mes"]          = df["date"].dt.month
+        df["anio"]         = df["date"].dt.year
+        df["semana_anio"]  = df["date"].dt.isocalendar().week.astype(int)
+        df["trimestre"]    = df["date"].dt.quarter
+        df["es_finde"]     = (df["dia_semana"] >= 5).astype(int)
+        df = df.drop(columns=["date"], errors="ignore")
+
+    # Crear lag features si no existen
+    if "unit_sales" in df.columns:
+        df = df.sort_values(["store_nbr","family","dia_semana"] if "store_nbr" in df.columns else df.columns[:1])
+        if "demand7" not in df.columns:
+            df["demand7"]  = df["unit_sales"].rolling(7,  min_periods=1).mean().shift(1).fillna(0)
+        if "demand14" not in df.columns:
+            df["demand14"] = df["unit_sales"].rolling(14, min_periods=1).mean().shift(1).fillna(0)
+        if "perecibilidad" not in df.columns and "perishable" in df.columns:
+            df["perecibilidad"] = df["perishable"].astype(int)
+
+    # Features disponibles para entrenamiento
+    avail = [c for c in FEATURES_LOG if c in df.columns]
+    num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    feature_cols = avail if avail else [c for c in num_cols if c not in ["demand7","demand14","perecibilidad","unit_sales"]]
+
+    if not feature_cols:
+        return False, "No se encontraron columnas numéricas para entrenar"
+
+    df_model = df[feature_cols + [c for c in ["demand7","demand14","perecibilidad"] if c in df.columns]].dropna()
+
+    os.makedirs(MODELS_DIR, exist_ok=True)
+    trained = []
+
+    for target, fname_xgb, fname_rf in [
+        ("demand7",      "xgb_demand7.pkl",  "rf_demand7.pkl"),
+        ("demand14",     "xgb_demand14.pkl", "rf_demand14.pkl"),
+    ]:
+        if target not in df_model.columns:
+            continue
+        X = df_model[feature_cols].values
+        y = df_model[target].values
+        X_tr, _, y_tr, _ = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        if HAS_XGB:
+            m = XGBRegressor(n_estimators=200, max_depth=6, learning_rate=0.05,
+                             random_state=42, verbosity=0, n_jobs=-1)
+            m.fit(X_tr, y_tr)
+            with open(os.path.join(MODELS_DIR, fname_xgb), "wb") as f: pickle.dump(m, f)
+            trained.append(fname_xgb)
+
+        m_rf = RandomForestRegressor(n_estimators=100, max_depth=12, random_state=42, n_jobs=-1)
+        m_rf.fit(X_tr, y_tr)
+        with open(os.path.join(MODELS_DIR, fname_rf), "wb") as f: pickle.dump(m_rf, f)
+        trained.append(fname_rf)
+
+    # Perecibilidad (clasificación)
+    if "perecibilidad" in df_model.columns:
+        X = df_model[feature_cols].values
+        y = df_model["perecibilidad"].astype(int).values
+        X_tr, _, y_tr, _ = train_test_split(X, y, test_size=0.2, random_state=42)
+        if HAS_XGB:
+            m = XGBClassifier(n_estimators=100, max_depth=5, random_state=42, verbosity=0)
+            m.fit(X_tr, y_tr)
+            with open(os.path.join(MODELS_DIR, "xgb_perece.pkl"), "wb") as f: pickle.dump(m, f)
+            trained.append("xgb_perece.pkl")
+
+    # Subir a GCS
+    gcs_msg = ""
+    if HAS_GCP:
+        try:
+            results = upload_all_models("models")
+            n_ok = sum(1 for _, ok, _ in results if ok)
+            gcs_msg = f" | {n_ok} PKL → GCS"
+        except Exception as e:
+            gcs_msg = f" | GCS error: {e}"
+
+    load_models_logistica.clear()
+
+    return True, f"Logística reentrenado · fuente: {fuente} · {len(trained)} modelos{gcs_msg}"
 
 
 # ══════════════════════════════════════════════════════════════
@@ -1087,9 +1290,9 @@ def page_developer():
 # DEVELOPER — LOGISTICA
 # ══════════════════════════════════════════════════════════════
 def _dev_logistica():
-    t_kpi, t_cmp, t_export, t_data = st.tabs([
+    t_kpi, t_cmp, t_export, t_retrain, t_data = st.tabs([
         "📊 KPI e Indicadores","🔬 Comparación de Modelos",
-        "📁 Exportar KPI","✏️ Ingreso de Datos"
+        "📁 Exportar KPI","🔄 Reentrenar Modelos","✏️ Ingreso de Datos"
     ])
 
     df_reg = pd.DataFrame(METRICAS_REG)
@@ -1195,6 +1398,41 @@ def _dev_logistica():
         st.markdown(f'<div class="alert alert-teal">Guardado localmente: <code>{kpi_path}</code></div>',
                     unsafe_allow_html=True)
 
+    # ── RETRAIN ─────────────────────────────────────────────────
+    with t_retrain:
+        st.markdown("""
+        <div class="page-title">
+            <h1>🔄 Reentrenar Modelos — Logística</h1>
+            <p>Lee los datos de Gold BigQuery (o CSV local), reentrena XGBoost + RF para demand7/demand14/perecibilidad y sube los PKL nuevos a GCS.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="alert alert-blue">
+        <b>Flujo:</b> Gold BigQuery → feature engineering → entrenar XGBoost + Random Forest → guardar PKL → subir a GCS → recargar modelos en esta sesión
+        </div>
+        """, unsafe_allow_html=True)
+
+        col_btn, col_info = st.columns([1, 2])
+        with col_btn:
+            if st.button("🔄 Reentrenar ahora", key="retrain_log_btn", use_container_width=True):
+                with st.spinner("Entrenando modelos de logística... puede tardar 2-5 minutos"):
+                    ok_r, msg_r = retrain_logistica()
+                if ok_r:
+                    st.success(msg_r)
+                    st.info("Los modelos se han recargado. Cambia de pestaña para ver los KPIs actualizados.")
+                else:
+                    st.error(msg_r)
+        with col_info:
+            st.markdown("""
+            <div class="alert alert-gray">
+            <b>Modelos que se entrenan:</b><br>
+            · XGBoost Regressor → <code>xgb_demand7.pkl</code>, <code>xgb_demand14.pkl</code><br>
+            · Random Forest → <code>rf_demand7.pkl</code>, <code>rf_demand14.pkl</code><br>
+            · XGBoost Clasificador → <code>xgb_perece.pkl</code> (perecibilidad)
+            </div>
+            """, unsafe_allow_html=True)
+
     # ── DATA ────────────────────────────────────────────────────
     with t_data:
         with st.form("form_log_dev"):
@@ -1239,9 +1477,9 @@ def _dev_logistica():
 # DEVELOPER — SALUD
 # ══════════════════════════════════════════════════════════════
 def _dev_salud():
-    t_kpi, t_cmp, t_export, t_data = st.tabs([
+    t_kpi, t_cmp, t_export, t_retrain, t_data = st.tabs([
         "📊 KPI e Indicadores","🔬 Comparación de Modelos",
-        "📁 Exportar KPI","✏️ Ingreso de Datos"
+        "📁 Exportar KPI","🔄 Reentrenar Modelos","✏️ Ingreso de Datos"
     ])
 
     data = load_and_train_salud()
@@ -1357,6 +1595,42 @@ def _dev_salud():
         with open(kpi_path,"w",encoding="utf-8") as f: json.dump(kpi_data,f,indent=2,ensure_ascii=False)
         st.markdown(f'<div class="alert alert-teal">Guardado: <code>{kpi_path}</code></div>',
                     unsafe_allow_html=True)
+
+    # ── RETRAIN ─────────────────────────────────────────────────
+    with t_retrain:
+        st.markdown("""
+        <div class="page-title">
+            <h1>🔄 Reentrenar Modelos — Salud</h1>
+            <p>Lee los datos de Gold BigQuery (o CSV local), reentrena XGBoost + RF + MLP para clasificación de severidad oncológica y sube los PKL nuevos a GCS.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="alert alert-blue">
+        <b>Flujo:</b> Gold BigQuery → feature engineering → entrenar XGBoost + RF + MLP → guardar PKL → subir a GCS → recargar modelos en esta sesión
+        </div>
+        """, unsafe_allow_html=True)
+
+        col_btn, col_info = st.columns([1, 2])
+        with col_btn:
+            if st.button("🔄 Reentrenar ahora", key="retrain_sal_btn", use_container_width=True):
+                with st.spinner("Entrenando modelos de salud... puede tardar 2-5 minutos"):
+                    ok_r, msg_r = retrain_salud()
+                if ok_r:
+                    st.success(msg_r)
+                    st.info("Los modelos se han recargado. Cambia de pestaña para ver los KPIs actualizados.")
+                else:
+                    st.error(msg_r)
+        with col_info:
+            st.markdown("""
+            <div class="alert alert-gray">
+            <b>Modelos que se entrenan:</b><br>
+            · XGBoost Clasificador → <code>xgb_salud.pkl</code><br>
+            · Random Forest → <code>rf_salud.pkl</code><br>
+            · MLP (red neuronal) → <code>mlp_salud.pkl</code><br>
+            · Scaler + feature columns → <code>scaler_salud.pkl</code>, <code>feature_cols_salud.pkl</code>
+            </div>
+            """, unsafe_allow_html=True)
 
     # ── DATA ────────────────────────────────────────────────────
     with t_data:
