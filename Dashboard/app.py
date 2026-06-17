@@ -63,163 +63,259 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-*, html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+*, html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 
-/* ── Main ── */
-.main .block-container { padding-top: 1.5rem; padding-bottom: 2rem; max-width: 1400px; }
-.main { background: #ffffff !important; }
-[data-testid="stAppViewContainer"] { background: #ffffff !important; }
+/* ══ FONDO PRINCIPAL — azul gris muy claro ══ */
+.main { background: #EEF2FF !important; }
+[data-testid="stAppViewContainer"] { background: #EEF2FF !important; }
+[data-testid="stAppViewContainer"] > section > div { background: #EEF2FF !important; }
+.main .block-container {
+    padding: 1.8rem 2rem 2.5rem !important;
+    max-width: 1440px !important;
+}
 
-/* ── Sidebar — blanco minimalista ── */
+/* ══ SIDEBAR — azul oscuro estilo referencia ══ */
 [data-testid="stSidebar"] {
-    background: #ffffff !important;
-    border-right: 1px solid #e2e8f0 !important;
+    background: linear-gradient(160deg, #1e3a8a 0%, #1e40af 60%, #2563eb 100%) !important;
+    border-right: none !important;
 }
-[data-testid="stSidebar"] * { color: #374151 !important; }
-[data-testid="stSidebar"] h1,[data-testid="stSidebar"] h2,[data-testid="stSidebar"] h3 {
-    color: #111827 !important; font-weight: 700 !important;
-}
-[data-testid="stSidebar"] label { color: #6b7280 !important; font-size: 0.82rem !important; }
-[data-testid="stSidebar"] [data-baseweb="select"] > div {
-    background: #f9fafb !important; border: 1px solid #e2e8f0 !important; border-radius: 8px !important;
-}
-[data-testid="stSidebar"] .stRadio > div { gap: 0.25rem; }
-[data-testid="stSidebar"] .stRadio label {
-    background: #f9fafb; border-radius: 8px; padding: 8px 14px;
-    border: 1px solid #e2e8f0; margin: 2px 0; width: 100%;
-    transition: all 0.15s;
-}
-[data-testid="stSidebar"] .stRadio label:hover { background: #eff6ff !important; border-color: #bfdbfe !important; }
+[data-testid="stSidebar"] > div { padding-top: 1.2rem !important; }
 
-/* ── Metrics ── */
+/* Texto sidebar */
+[data-testid="stSidebar"] * { color: #bfdbfe !important; }
+[data-testid="stSidebar"] h1,[data-testid="stSidebar"] h2,[data-testid="stSidebar"] h3 {
+    color: #ffffff !important; font-weight: 700 !important; letter-spacing: -0.01em !important;
+}
+[data-testid="stSidebar"] label { color: #93c5fd !important; font-size: 0.8rem !important; font-weight: 500 !important; }
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] span { color: #bfdbfe !important; }
+[data-testid="stSidebar"] small, [data-testid="stSidebar"] .stCaption { color: #7dd3fc !important; opacity: 0.8; }
+
+/* Separador sidebar */
+[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.15) !important; margin: 10px 0 !important; }
+
+/* Radio buttons sidebar */
+[data-testid="stSidebar"] .stRadio > div { gap: 4px !important; }
+[data-testid="stSidebar"] .stRadio label {
+    background: rgba(255,255,255,0.08) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-radius: 10px !important;
+    padding: 9px 14px !important;
+    color: #bfdbfe !important;
+    font-weight: 500 !important;
+    transition: all 0.15s !important;
+}
+[data-testid="stSidebar"] .stRadio label:hover {
+    background: rgba(255,255,255,0.15) !important;
+    border-color: rgba(255,255,255,0.3) !important;
+}
+[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] input:checked ~ div {
+    background: rgba(255,255,255,0.22) !important;
+    border-color: #93c5fd !important;
+}
+
+/* Botones sidebar */
+[data-testid="stSidebar"] .stButton > button {
+    background: rgba(255,255,255,0.12) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.25) !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    transition: all 0.15s !important;
+    box-shadow: none !important;
+}
+[data-testid="stSidebar"] .stButton > button:hover {
+    background: rgba(255,255,255,0.22) !important;
+    border-color: rgba(255,255,255,0.4) !important;
+    transform: none !important;
+}
+
+/* ══ MÉTRICAS ══ */
 [data-testid="stMetric"] {
-    background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
-    padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    background: #ffffff !important;
+    border: none !important;
+    border-radius: 14px !important;
+    padding: 18px 22px !important;
+    box-shadow: 0 1px 3px rgba(30,58,138,0.06), 0 4px 16px rgba(30,58,138,0.06) !important;
 }
 [data-testid="stMetricLabel"] {
-    font-size: 0.72rem !important; color: #6b7280 !important;
-    font-weight: 600 !important; text-transform: uppercase; letter-spacing: 0.06em;
+    font-size: 0.71rem !important; color: #6b7280 !important;
+    font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.07em !important;
 }
 [data-testid="stMetricValue"] {
-    font-size: 1.55rem !important; font-weight: 700 !important; color: #111827 !important;
+    font-size: 1.6rem !important; font-weight: 800 !important; color: #111827 !important;
 }
-[data-testid="stMetricDelta"] { font-size: 0.75rem !important; }
+[data-testid="stMetricDelta"] { font-size: 0.74rem !important; font-weight: 500 !important; }
 
-/* ── Buttons ── */
+/* ══ BOTONES principales ══ */
 .stButton > button {
-    background: #2563eb !important; color: #fff !important;
-    border: none !important; border-radius: 8px !important;
-    padding: 9px 20px !important; font-weight: 600 !important;
-    font-size: 0.88rem !important; width: 100% !important;
-    transition: background 0.15s !important;
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 10px 22px !important;
+    font-weight: 600 !important;
+    font-size: 0.87rem !important;
+    width: 100% !important;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.3) !important;
+    transition: all 0.15s !important;
 }
-.stButton > button:hover { background: #1d4ed8 !important; }
+.stButton > button:hover {
+    background: #1d4ed8 !important;
+    box-shadow: 0 4px 16px rgba(37,99,235,0.4) !important;
+    transform: translateY(-1px) !important;
+}
+.stButton > button:active { transform: translateY(0) !important; }
 
-/* ── Tabs ── */
+/* ══ TABS ══ */
 .stTabs [data-baseweb="tab-list"] {
-    background: #f3f4f6; border-radius: 10px; padding: 3px; gap: 2px;
-    border: 1px solid #e5e7eb;
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    padding: 4px !important;
+    gap: 2px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+    border: 1px solid #e5e7eb !important;
 }
 .stTabs [data-baseweb="tab"] {
-    background: transparent !important; border-radius: 7px !important;
-    padding: 8px 18px !important; font-weight: 500 !important;
-    color: #6b7280 !important; font-size: 0.84rem !important; border: none !important;
+    background: transparent !important;
+    border-radius: 9px !important;
+    padding: 9px 20px !important;
+    font-weight: 500 !important;
+    color: #6b7280 !important;
+    font-size: 0.84rem !important;
+    border: none !important;
 }
 .stTabs [aria-selected="true"] {
-    background: #ffffff !important; color: #111827 !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important; font-weight: 600 !important;
+    background: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.35) !important;
+    font-weight: 600 !important;
 }
 
-/* ── Cards ── */
-.card {
-    background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px;
-    padding: 20px 24px; margin-bottom: 14px;
+/* ══ CARDS ══ */
+.ui-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 22px 26px;
+    box-shadow: 0 1px 3px rgba(30,58,138,0.06), 0 4px 16px rgba(30,58,138,0.05);
+    margin-bottom: 16px;
+    border: none;
 }
 
-/* ── Page headers — minimalistas ── */
+/* ══ PAGE HEADER ══ */
 .page-header {
-    padding: 20px 0 16px; margin-bottom: 20px;
-    border-bottom: 1px solid #e5e7eb;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 22px 28px;
+    margin-bottom: 22px;
+    box-shadow: 0 1px 3px rgba(30,58,138,0.06);
+    border-left: 4px solid #2563eb;
 }
-.page-header h1 { font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0; }
-.page-header p  { font-size: 0.85rem; color: #6b7280; margin: 4px 0 0; }
+.page-header h1 { font-size: 1.45rem; font-weight: 800; color: #111827; margin: 0; letter-spacing: -0.02em; }
+.page-header p  { font-size: 0.83rem; color: #6b7280; margin: 5px 0 0; }
 .page-header .accent { color: #2563eb; }
 
-/* ── Landing cards ── */
+/* ══ LANDING CARDS ══ */
 .role-card {
-    border-radius: 14px; padding: 32px 28px; text-align: center;
-    transition: box-shadow 0.2s, transform 0.2s; cursor: pointer;
-    margin-bottom: 14px; background: #ffffff;
+    border-radius: 16px; padding: 34px 28px; text-align: center;
+    background: #ffffff;
+    transition: box-shadow 0.2s, transform 0.2s; cursor: pointer; margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(30,58,138,0.06), 0 4px 16px rgba(30,58,138,0.05);
 }
-.role-card-dev    { border: 1.5px solid #bfdbfe; }
-.role-card-worker { border: 1.5px solid #ddd6fe; }
-.role-card:hover  { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.09); }
-.role-card .role-icon { font-size: 2.8rem; margin-bottom: 10px; }
-.role-card h2     { font-size: 1.3rem; font-weight: 700; color: #111827; margin: 0 0 8px; }
-.role-card p      { font-size: 0.85rem; color: #6b7280; margin: 0; line-height: 1.6; }
-.badge { display:inline-block; padding:4px 14px; border-radius:20px; font-size:0.75rem; font-weight:600; margin-top:12px; }
+.role-card-dev    { border-top: 4px solid #2563eb; }
+.role-card-worker { border-top: 4px solid #7c3aed; }
+.role-card:hover  { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(30,58,138,0.15); }
+.role-card .role-icon { font-size: 2.8rem; margin-bottom: 12px; }
+.role-card h2     { font-size: 1.25rem; font-weight: 800; color: #111827; margin: 0 0 8px; letter-spacing: -0.01em; }
+.role-card p      { font-size: 0.84rem; color: #6b7280; margin: 0; line-height: 1.65; }
+.badge { display:inline-block; padding:4px 14px; border-radius:20px; font-size:0.75rem; font-weight:700; margin-top:12px; }
 .badge-dev    { background:#dbeafe; color:#1e40af; }
 .badge-worker { background:#ede9fe; color:#5b21b6; }
 
-/* ── Risk cards ── */
+/* ══ RISK CARDS ══ */
 .risk-card {
-    border-radius: 14px; padding: 28px; text-align: center; margin: 12px 0;
+    border-radius: 14px; padding: 26px; text-align: center; margin: 10px 0;
     background: #ffffff;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
-.risk-alto   { border: 2px solid #ef4444; background: #fef2f2; }
-.risk-medio  { border: 2px solid #f59e0b; background: #fffbeb; }
-.risk-bajo   { border: 2px solid #22c55e; background: #f0fdf4; }
-.risk-card .risk-label { font-size: 2rem; font-weight: 800; margin: 0; }
+.risk-alto   { border-top: 4px solid #ef4444; background: #fef2f2; }
+.risk-medio  { border-top: 4px solid #f59e0b; background: #fffbeb; }
+.risk-bajo   { border-top: 4px solid #22c55e; background: #f0fdf4; }
+.risk-card .risk-label { font-size: 1.9rem; font-weight: 800; margin: 0; }
 .risk-alto  .risk-label { color: #b91c1c; }
 .risk-medio .risk-label { color: #92400e; }
 .risk-bajo  .risk-label { color: #14532d; }
-.risk-card .risk-sub { font-size: 0.9rem; color: #374151; margin-top: 8px; }
+.risk-card .risk-sub { font-size: 0.88rem; color: #374151; margin-top: 6px; }
 
-/* ── Alert boxes ── */
+/* ══ ALERTS ══ */
 .alert {
-    border-radius: 8px; padding: 12px 16px; margin: 8px 0;
-    font-size: 0.85rem; font-weight: 500; line-height: 1.5;
+    border-radius: 10px; padding: 12px 16px; margin: 8px 0;
+    font-size: 0.84rem; font-weight: 500; line-height: 1.5;
 }
 .alert-red    { background:#fef2f2; border-left:3px solid #ef4444; color:#7f1d1d; }
 .alert-yellow { background:#fffbeb; border-left:3px solid #f59e0b; color:#78350f; }
 .alert-green  { background:#f0fdf4; border-left:3px solid #22c55e; color:#14532d; }
-.alert-blue   { background:#eff6ff; border-left:3px solid #3b82f6; color:#1e3a5f; }
+.alert-blue   { background:#eff6ff; border-left:3px solid #2563eb; color:#1e3a5f; }
 .alert-teal   { background:#f0fdfa; border-left:3px solid #0d9488; color:#134e4a; }
 .alert-gray   { background:#f9fafb; border-left:3px solid #9ca3af; color:#374151; }
 
-/* ── Nutrition card ── */
+/* ══ NUTRITION CARD ══ */
 .nutr-card {
-    background: #ffffff; border-radius: 12px; padding: 18px 22px;
-    border: 1px solid #e5e7eb;
+    background: #ffffff; border-radius: 14px; padding: 18px 22px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #f1f5f9;
 }
-.nutr-card.alto  { border-color: #fca5a5; background: #fef2f2; }
-.nutr-card.medio { border-color: #fcd34d; background: #fffbeb; }
-.nutr-card.bajo  { border-color: #86efac; background: #f0fdf4; }
+.nutr-card.alto  { border-top: 3px solid #ef4444; }
+.nutr-card.medio { border-top: 3px solid #f59e0b; }
+.nutr-card.bajo  { border-top: 3px solid #22c55e; }
 
-/* ── Medallion badges ── */
+/* ══ MEDAL CARDS ══ */
 .medal-card {
     text-align:center; padding:18px; background:#ffffff;
-    border-radius:12px; border:1px solid #e5e7eb;
+    border-radius:14px;
+    box-shadow: 0 1px 4px rgba(30,58,138,0.06);
+    border: 1px solid #e5e7eb;
 }
 .medal-card .medal-icon { font-size:1.8rem; }
 .medal-card .medal-name { font-weight:700; color:#111827; font-size:0.95rem; margin-top:4px; }
-.medal-card .medal-sub  { font-size:0.78rem; color:#6b7280; margin-top:3px; }
-.medal-card .medal-tbl  { font-size:0.75rem; color:#9ca3af; margin-top:2px; font-family:monospace; }
+.medal-card .medal-sub  { font-size:0.78rem; color:#6b7280; margin-top:4px; line-height:1.4; }
+.medal-card .medal-tbl  { font-size:0.72rem; color:#2563eb; margin-top:2px; font-family:monospace; font-weight:600; }
 
-/* ── Status pill ── */
+/* ══ STATUS PILLS ══ */
 .status-pill {
     display:inline-flex; align-items:center; gap:6px;
-    padding:6px 14px; border-radius:20px; font-size:0.8rem; font-weight:600;
-    margin:3px 0;
+    padding:6px 14px; border-radius:20px; font-size:0.79rem; font-weight:600;
+    margin:3px 0; width:100%; box-sizing:border-box;
 }
-.status-ok  { background:#f0fdf4; color:#15803d; border:1px solid #86efac; }
-.status-err { background:#fef2f2; color:#b91c1c; border:1px solid #fca5a5; }
-.status-off { background:#f9fafb; color:#6b7280; border:1px solid #e5e7eb; }
+.status-ok  { background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; }
+.status-err { background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; }
+.status-off { background:#f8fafc; color:#64748b; border:1px solid #e2e8f0; }
 
-hr { border-color: #e5e7eb !important; margin: 16px 0; }
+/* ══ DATAFRAMES ══ */
+[data-testid="stDataFrame"] { border-radius: 12px !important; overflow: hidden !important; }
+.stDataFrame > div { border-radius: 12px !important; }
+
+/* ══ EXPANDER ══ */
+[data-testid="stExpander"] {
+    background: #ffffff; border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important; overflow: hidden;
+}
+
+/* ══ INPUTS ══ */
+[data-baseweb="input"] > div, [data-baseweb="select"] > div:first-child,
+[data-baseweb="textarea"] > div {
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+}
+[data-baseweb="input"] > div:focus-within,
+[data-baseweb="select"] > div:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1) !important;
+}
+
+hr { border-color: #e5e7eb !important; margin: 18px 0 !important; }
 ::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #f9fafb; }
-::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1617,12 +1713,16 @@ def page_trabajador():
             totales     = [round(v * n_pac * n_dias, 2) for v in por_dia]
             por_pac_dia = [round(v * n_pac, 2) for v in por_dia]
 
+            import re as _re
+            _strip = lambda s: _re.sub(r'[^\w\s/()\-\.%]', '', s).strip()
             df_canasta = pd.DataFrame({
                 "Alimento": items,
                 "Por paciente/día": por_dia,
                 f"Total {n_pac} pac/día": por_pac_dia,
                 f"Total {n_dias} días": totales,
             })
+            df_canasta_csv = df_canasta.copy()
+            df_canasta_csv["Alimento"] = df_canasta_csv["Alimento"].apply(_strip)
             st.dataframe(df_canasta, use_container_width=True, hide_index=True)
 
             st.plotly_chart(chart_nutrition_basket(nivel_sel, n_pac, n_dias), use_container_width=True)
@@ -1685,9 +1785,9 @@ def page_trabajador():
         with ex2:
             st.download_button(
                 "⬇ Descargar Canasta (CSV)",
-                data=df_canasta.to_csv(index=False).encode(),
+                data=df_canasta_csv.to_csv(index=False, encoding="utf-8").encode("utf-8"),
                 file_name=f"canasta_{nivel_sel.lower()}_{n_pac}pac_{datetime.now().strftime('%Y%m%d')}.csv",
-                mime="text/csv", use_container_width=True
+                mime="text/csv; charset=utf-8", use_container_width=True
             )
 
         # Multi-level planning
