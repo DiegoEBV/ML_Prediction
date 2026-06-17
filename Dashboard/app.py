@@ -1197,16 +1197,6 @@ def _dev_logistica():
 
     # ── GCP ─────────────────────────────────────────────────────
     with t_gcp:
-        _render_gcp_panel()
-        st.markdown("---")
-
-        st.markdown("""
-        <div class="alert alert-blue">
-        <b>BigQuery usa TABLAS, no buckets.</b> Los datos van a tablas dentro del dataset <code>mlaldimi</code>
-        en el proyecto <code>413462127752</code>. No se usa Cloud Storage en esta arquitectura.
-        </div>
-        """, unsafe_allow_html=True)
-
         ca2, cb2, cc2 = st.columns(3)
         for col, icon, name, tbl, desc in [
             (ca2,"🥉","Bronze","bronze_logistica","CSV/TXT crudo — sube el archivo favorita aquí"),
@@ -1223,48 +1213,8 @@ def _dev_logistica():
             )
 
         st.markdown("---")
-        st.markdown("""
-        <div class="alert alert-gray">
-        <b>Flujo de datos:</b><br>
-        1. Sube el TXT/CSV crudo → <b>Bronze</b><br>
-        2. Ejecuta <code>setup_local.py</code> → limpieza → <b>Silver</b> → features → <b>Gold</b><br>
-        3. Los <b>.pkl</b> generados se suben a GCS con el botón de abajo<br>
-        4. Al arrancar Streamlit Cloud, los PKL se descargan automáticamente desde GCS
-        </div>
-        """, unsafe_allow_html=True)
-
-        # ── Gestión de modelos PKL en GCS ──
-        st.markdown("#### Modelos PKL — Cloud Storage (`gs://mlaldimi-models/`)")
-        pm1, pm2 = st.columns(2)
-        with pm1:
-            if st.button("☁️ Subir PKLs locales → GCS", key="upload_pkls", use_container_width=True):
-                if HAS_GCP:
-                    with st.spinner("Subiendo modelos..."):
-                        results = upload_all_models("models")
-                    for rel, ok, msg in results:
-                        st.markdown(f'<div class="alert alert-{"green" if ok else "red"}">'
-                                    f'{"✓" if ok else "✗"} <code>{rel}</code> — {msg}</div>',
-                                    unsafe_allow_html=True)
-                    if not results:
-                        st.warning("No se encontraron PKL en Dashboard/models/. Ejecuta setup_local.py primero.")
-                else:
-                    st.warning("GCP no disponible")
-        with pm2:
-            if st.button("⬇️ Ver PKLs en GCS", key="list_pkls", use_container_width=True):
-                if HAS_GCP:
-                    names, msg = list_models()
-                    if names:
-                        for n in names:
-                            st.markdown(f'<div class="alert alert-gray">📦 <code>{n}</code></div>',
-                                        unsafe_allow_html=True)
-                    else:
-                        st.info(f"Sin modelos en GCS aún. {msg}")
-                else:
-                    st.warning("GCP no disponible")
-
-        st.markdown("---")
         st.markdown("#### Cargar datos a BigQuery")
-        uploaded = st.file_uploader("CSV/TXT de logística (ventas diarias)", type=["csv","txt"], key="gcp_log_file")
+        uploaded = st.file_uploader("Selecciona CSV/TXT de logística (ventas diarias)", type=["csv","txt"], key="gcp_log_file", label_visibility="collapsed")
         if uploaded:
             df_up = pd.read_csv(uploaded)
             st.dataframe(df_up.head(5), use_container_width=True)
@@ -1453,15 +1403,6 @@ def _dev_salud():
 
     # ── GCP ─────────────────────────────────────────────────────
     with t_gcp:
-        _render_gcp_panel()
-        st.markdown("---")
-
-        st.markdown("""
-        <div class="alert alert-blue">
-        <b>BigQuery usa TABLAS, no buckets.</b> Dataset: <code>mlaldimi</code> · Proyecto: <code>413462127752</code>
-        </div>
-        """, unsafe_allow_html=True)
-
         ca3, cb3, cc3 = st.columns(3)
         for col, icon, name, tbl, desc in [
             (ca3,"🥉","Bronze","bronze_salud","CSV/TXT crudo — sube el archivo de pacientes aquí"),
@@ -1478,14 +1419,8 @@ def _dev_salud():
             )
 
         st.markdown("---")
-        st.markdown("""
-        <div class="alert alert-gray">
-        <b>Flujo:</b> TXT crudo → Bronze → Notebook limpieza → Silver → Features → Gold → .pkl entrenados
-        </div>
-        """, unsafe_allow_html=True)
-
         st.markdown("#### Cargar datos a BigQuery")
-        uploaded = st.file_uploader("CSV/TXT de salud (pacientes oncológicos)", type=["csv","txt"], key="gcp_salud_file")
+        uploaded = st.file_uploader("Selecciona CSV/TXT de salud (pacientes oncológicos)", type=["csv","txt"], key="gcp_salud_file", label_visibility="collapsed")
         if uploaded:
             df_up = pd.read_csv(uploaded)
             st.dataframe(df_up.head(5), use_container_width=True)
