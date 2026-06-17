@@ -159,6 +159,28 @@ def step_verify_pkls():
 
     return all_ok
 
+# ── 7. Subir modelos a GCS ──────────────────────────────────────────────────────
+def step_upload_models_gcs(has_gcp):
+    if not has_gcp:
+        warn("Saltando upload de modelos a GCS (sin credenciales GCP)")
+        return
+    print("\n=== Subiendo modelos PKL a Google Cloud Storage ===")
+    try:
+        import sys
+        if str(ROOT) not in sys.path:
+            sys.path.append(str(ROOT))
+        from Dashboard.gcp.connector import upload_all_models
+        
+        models_dir = ROOT / "Dashboard" / "models"
+        results = upload_all_models(str(models_dir))
+        for rel, ok_status, msg in results:
+            if ok_status:
+                ok(f"Modelo subido: {rel} ({msg})")
+            else:
+                warn(f"Error subiendo {rel}: {msg}")
+    except Exception as e:
+        warn(f"Error al subir modelos a GCS: {e}")
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 def read_data(path):
     """Lee CSV o TXT con separador coma."""
@@ -211,6 +233,9 @@ def main():
     step_copy_csvs(csv_salud, csv_log)
     step_run_notebooks()
     all_ok = step_verify_pkls()
+
+    if all_ok:
+        step_upload_models_gcs(has_gcp)
 
     print("\n" + "=" * 60)
     if all_ok:
