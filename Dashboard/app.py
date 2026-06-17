@@ -38,7 +38,9 @@ try:
         upload_silver_salud, upload_silver_logistica,
         upload_gold_salud, upload_gold_logistica,
         read_gold_salud, read_gold_logistica,
-        GCP_PROJECT, DATASET_ID, get_auth_method
+        GCP_PROJECT, DATASET_ID, get_auth_method,
+        upload_all_models, sync_models_from_gcs, list_models,
+        GCS_BUCKET, GCS_PREFIX,
     )
     HAS_GCP = True
 except ImportError:
@@ -61,163 +63,272 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-*, html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+*, html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 
-/* ── Main ── */
-.main .block-container { padding-top: 1.5rem; padding-bottom: 2rem; max-width: 1400px; }
-.main { background: #ffffff !important; }
-[data-testid="stAppViewContainer"] { background: #ffffff !important; }
+/* ══ FONDO PRINCIPAL — azul gris muy claro ══ */
+.main { background: #EEF2FF !important; }
+[data-testid="stAppViewContainer"] { background: #EEF2FF !important; }
+[data-testid="stAppViewContainer"] > section > div { background: #EEF2FF !important; }
+.main .block-container {
+    padding: 1.8rem 2rem 2.5rem !important;
+    max-width: 1440px !important;
+}
 
-/* ── Sidebar — blanco minimalista ── */
+/* ══ SIDEBAR — azul oscuro gradiente médico SaaS ══ */
 [data-testid="stSidebar"] {
-    background: #ffffff !important;
-    border-right: 1px solid #e2e8f0 !important;
+    background: linear-gradient(180deg, #1e3a8a 0%, #1d4ed8 100%) !important;
+    border-right: none !important;
 }
-[data-testid="stSidebar"] * { color: #374151 !important; }
-[data-testid="stSidebar"] h1,[data-testid="stSidebar"] h2,[data-testid="stSidebar"] h3 {
-    color: #111827 !important; font-weight: 700 !important;
-}
-[data-testid="stSidebar"] label { color: #6b7280 !important; font-size: 0.82rem !important; }
-[data-testid="stSidebar"] [data-baseweb="select"] > div {
-    background: #f9fafb !important; border: 1px solid #e2e8f0 !important; border-radius: 8px !important;
-}
-[data-testid="stSidebar"] .stRadio > div { gap: 0.25rem; }
-[data-testid="stSidebar"] .stRadio label {
-    background: #f9fafb; border-radius: 8px; padding: 8px 14px;
-    border: 1px solid #e2e8f0; margin: 2px 0; width: 100%;
-    transition: all 0.15s;
-}
-[data-testid="stSidebar"] .stRadio label:hover { background: #eff6ff !important; border-color: #bfdbfe !important; }
+[data-testid="stSidebar"] > div { padding-top: 0 !important; }
 
-/* ── Metrics ── */
+/* Texto sidebar */
+[data-testid="stSidebar"] * { color: #bfdbfe !important; }
+[data-testid="stSidebar"] h1,[data-testid="stSidebar"] h2,[data-testid="stSidebar"] h3 {
+    color: #ffffff !important; font-weight: 700 !important; letter-spacing: -0.01em !important;
+}
+[data-testid="stSidebar"] label { color: #93c5fd !important; font-size: 0.8rem !important; font-weight: 500 !important; }
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] span { color: #bfdbfe !important; }
+[data-testid="stSidebar"] small, [data-testid="stSidebar"] .stCaption { color: #7dd3fc !important; opacity: 0.8; }
+
+/* Separador sidebar */
+[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.15) !important; margin: 10px 0 !important; }
+
+/* Radio buttons sidebar — nav items estilo SaaS */
+[data-testid="stSidebar"] .stRadio > div { gap: 4px !important; }
+[data-testid="stSidebar"] .stRadio label {
+    background: rgba(255,255,255,0.07) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 10px !important;
+    padding: 9px 14px !important;
+    color: #bfdbfe !important;
+    font-weight: 500 !important;
+    transition: all 0.15s !important;
+}
+[data-testid="stSidebar"] .stRadio label:hover {
+    background: rgba(255,255,255,0.14) !important;
+    border-color: rgba(255,255,255,0.28) !important;
+}
+[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] input:checked ~ div {
+    background: rgba(255,255,255,0.22) !important;
+    border-color: #93c5fd !important;
+}
+
+/* Botones sidebar */
+[data-testid="stSidebar"] .stButton > button {
+    background: rgba(255,255,255,0.12) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.25) !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    transition: all 0.15s !important;
+    box-shadow: none !important;
+}
+[data-testid="stSidebar"] .stButton > button:hover {
+    background: rgba(255,255,255,0.22) !important;
+    border-color: rgba(255,255,255,0.4) !important;
+    transform: none !important;
+}
+
+/* ══ MÉTRICAS ══ */
 [data-testid="stMetric"] {
-    background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
-    padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    background: #ffffff !important;
+    border: none !important;
+    border-radius: 14px !important;
+    padding: 18px 22px !important;
+    box-shadow: 0 2px 8px rgba(30,58,138,0.08) !important;
+    border-left: 4px solid #2563eb !important;
 }
 [data-testid="stMetricLabel"] {
-    font-size: 0.72rem !important; color: #6b7280 !important;
-    font-weight: 600 !important; text-transform: uppercase; letter-spacing: 0.06em;
+    font-size: 0.71rem !important; color: #6b7280 !important;
+    font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.07em !important;
 }
 [data-testid="stMetricValue"] {
-    font-size: 1.55rem !important; font-weight: 700 !important; color: #111827 !important;
+    font-size: 1.6rem !important; font-weight: 800 !important; color: #111827 !important;
 }
-[data-testid="stMetricDelta"] { font-size: 0.75rem !important; }
+[data-testid="stMetricDelta"] { font-size: 0.74rem !important; font-weight: 500 !important; }
 
-/* ── Buttons ── */
+/* ══ BOTONES principales ══ */
 .stButton > button {
-    background: #2563eb !important; color: #fff !important;
-    border: none !important; border-radius: 8px !important;
-    padding: 9px 20px !important; font-weight: 600 !important;
-    font-size: 0.88rem !important; width: 100% !important;
-    transition: background 0.15s !important;
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 10px 22px !important;
+    font-weight: 600 !important;
+    font-size: 0.87rem !important;
+    width: 100% !important;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.3) !important;
+    transition: all 0.15s !important;
 }
-.stButton > button:hover { background: #1d4ed8 !important; }
+.stButton > button:hover {
+    background: #1d4ed8 !important;
+    box-shadow: 0 4px 16px rgba(37,99,235,0.4) !important;
+    transform: translateY(-1px) !important;
+}
+.stButton > button:active { transform: translateY(0) !important; }
 
-/* ── Tabs ── */
+/* ══ TABS — fondo blanco, activo azul ══ */
 .stTabs [data-baseweb="tab-list"] {
-    background: #f3f4f6; border-radius: 10px; padding: 3px; gap: 2px;
-    border: 1px solid #e5e7eb;
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    padding: 4px !important;
+    gap: 2px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+    border: 1px solid #e5e7eb !important;
 }
 .stTabs [data-baseweb="tab"] {
-    background: transparent !important; border-radius: 7px !important;
-    padding: 8px 18px !important; font-weight: 500 !important;
-    color: #6b7280 !important; font-size: 0.84rem !important; border: none !important;
+    background: transparent !important;
+    border-radius: 9px !important;
+    padding: 9px 20px !important;
+    font-weight: 500 !important;
+    color: #6b7280 !important;
+    font-size: 0.84rem !important;
+    border: none !important;
 }
 .stTabs [aria-selected="true"] {
-    background: #ffffff !important; color: #111827 !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important; font-weight: 600 !important;
+    background: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.35) !important;
+    font-weight: 600 !important;
 }
 
-/* ── Cards ── */
-.card {
-    background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px;
-    padding: 20px 24px; margin-bottom: 14px;
+/* ══ CARDS ══ */
+.ui-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 22px 26px;
+    box-shadow: 0 2px 8px rgba(30,58,138,0.08);
+    margin-bottom: 16px;
+    border: none;
 }
 
-/* ── Page headers — minimalistas ── */
+/* ══ PAGE TITLE — inline, sin fondo de bloque ══ */
+.page-title {
+    margin-bottom: 20px;
+}
+.page-title h1 {
+    font-size: 1.6rem; font-weight: 800; color: #111827;
+    margin: 0 0 4px; letter-spacing: -0.02em;
+}
+.page-title p {
+    font-size: 0.84rem; color: #6b7280; margin: 0;
+}
+.page-title .accent { color: #2563eb; }
+
+/* ══ PAGE HEADER (legacy — kept for backward compat) ══ */
 .page-header {
-    padding: 20px 0 16px; margin-bottom: 20px;
-    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 20px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
 }
-.page-header h1 { font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0; }
-.page-header p  { font-size: 0.85rem; color: #6b7280; margin: 4px 0 0; }
+.page-header h1 { font-size: 1.55rem; font-weight: 800; color: #111827; margin: 0 0 4px; letter-spacing: -0.02em; }
+.page-header p  { font-size: 0.84rem; color: #6b7280; margin: 0; }
 .page-header .accent { color: #2563eb; }
 
-/* ── Landing cards ── */
+/* ══ LANDING CARDS ══ */
 .role-card {
-    border-radius: 14px; padding: 32px 28px; text-align: center;
-    transition: box-shadow 0.2s, transform 0.2s; cursor: pointer;
-    margin-bottom: 14px; background: #ffffff;
+    border-radius: 16px; padding: 34px 28px; text-align: center;
+    background: #ffffff;
+    transition: box-shadow 0.2s, transform 0.2s; cursor: pointer; margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(30,58,138,0.08);
 }
-.role-card-dev    { border: 1.5px solid #bfdbfe; }
-.role-card-worker { border: 1.5px solid #ddd6fe; }
-.role-card:hover  { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.09); }
-.role-card .role-icon { font-size: 2.8rem; margin-bottom: 10px; }
-.role-card h2     { font-size: 1.3rem; font-weight: 700; color: #111827; margin: 0 0 8px; }
-.role-card p      { font-size: 0.85rem; color: #6b7280; margin: 0; line-height: 1.6; }
-.badge { display:inline-block; padding:4px 14px; border-radius:20px; font-size:0.75rem; font-weight:600; margin-top:12px; }
+.role-card-dev    { border-top: 4px solid #2563eb; }
+.role-card-worker { border-top: 4px solid #7c3aed; }
+.role-card:hover  { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(30,58,138,0.15); }
+.role-card .role-icon { font-size: 2.8rem; margin-bottom: 12px; }
+.role-card h2     { font-size: 1.25rem; font-weight: 800; color: #111827; margin: 0 0 8px; letter-spacing: -0.01em; }
+.role-card p      { font-size: 0.84rem; color: #6b7280; margin: 0; line-height: 1.65; }
+.badge { display:inline-block; padding:4px 14px; border-radius:20px; font-size:0.75rem; font-weight:700; margin-top:12px; }
 .badge-dev    { background:#dbeafe; color:#1e40af; }
 .badge-worker { background:#ede9fe; color:#5b21b6; }
 
-/* ── Risk cards ── */
+/* ══ RISK CARDS ══ */
 .risk-card {
-    border-radius: 14px; padding: 28px; text-align: center; margin: 12px 0;
+    border-radius: 14px; padding: 26px; text-align: center; margin: 10px 0;
     background: #ffffff;
+    box-shadow: 0 2px 8px rgba(30,58,138,0.08);
 }
-.risk-alto   { border: 2px solid #ef4444; background: #fef2f2; }
-.risk-medio  { border: 2px solid #f59e0b; background: #fffbeb; }
-.risk-bajo   { border: 2px solid #22c55e; background: #f0fdf4; }
-.risk-card .risk-label { font-size: 2rem; font-weight: 800; margin: 0; }
+.risk-alto   { border-top: 4px solid #ef4444; background: #fef2f2; }
+.risk-medio  { border-top: 4px solid #f59e0b; background: #fffbeb; }
+.risk-bajo   { border-top: 4px solid #22c55e; background: #f0fdf4; }
+.risk-card .risk-label { font-size: 1.9rem; font-weight: 800; margin: 0; }
 .risk-alto  .risk-label { color: #b91c1c; }
 .risk-medio .risk-label { color: #92400e; }
 .risk-bajo  .risk-label { color: #14532d; }
-.risk-card .risk-sub { font-size: 0.9rem; color: #374151; margin-top: 8px; }
+.risk-card .risk-sub { font-size: 0.88rem; color: #374151; margin-top: 6px; }
 
-/* ── Alert boxes ── */
+/* ══ ALERTS ══ */
 .alert {
-    border-radius: 8px; padding: 12px 16px; margin: 8px 0;
-    font-size: 0.85rem; font-weight: 500; line-height: 1.5;
+    border-radius: 10px; padding: 12px 16px; margin: 8px 0;
+    font-size: 0.84rem; font-weight: 500; line-height: 1.5;
 }
 .alert-red    { background:#fef2f2; border-left:3px solid #ef4444; color:#7f1d1d; }
 .alert-yellow { background:#fffbeb; border-left:3px solid #f59e0b; color:#78350f; }
 .alert-green  { background:#f0fdf4; border-left:3px solid #22c55e; color:#14532d; }
-.alert-blue   { background:#eff6ff; border-left:3px solid #3b82f6; color:#1e3a5f; }
+.alert-blue   { background:#eff6ff; border-left:3px solid #2563eb; color:#1e3a5f; }
 .alert-teal   { background:#f0fdfa; border-left:3px solid #0d9488; color:#134e4a; }
 .alert-gray   { background:#f9fafb; border-left:3px solid #9ca3af; color:#374151; }
 
-/* ── Nutrition card ── */
+/* ══ NUTRITION CARD ══ */
 .nutr-card {
-    background: #ffffff; border-radius: 12px; padding: 18px 22px;
-    border: 1px solid #e5e7eb;
+    background: #ffffff; border-radius: 14px; padding: 18px 22px;
+    box-shadow: 0 2px 8px rgba(30,58,138,0.08); border: 1px solid #f1f5f9;
 }
-.nutr-card.alto  { border-color: #fca5a5; background: #fef2f2; }
-.nutr-card.medio { border-color: #fcd34d; background: #fffbeb; }
-.nutr-card.bajo  { border-color: #86efac; background: #f0fdf4; }
+.nutr-card.alto  { border-top: 3px solid #ef4444; }
+.nutr-card.medio { border-top: 3px solid #f59e0b; }
+.nutr-card.bajo  { border-top: 3px solid #22c55e; }
 
-/* ── Medallion badges ── */
+/* ══ MEDAL CARDS ══ */
 .medal-card {
     text-align:center; padding:18px; background:#ffffff;
-    border-radius:12px; border:1px solid #e5e7eb;
+    border-radius:14px;
+    box-shadow: 0 2px 8px rgba(30,58,138,0.08);
+    border: 1px solid #e5e7eb;
 }
 .medal-card .medal-icon { font-size:1.8rem; }
 .medal-card .medal-name { font-weight:700; color:#111827; font-size:0.95rem; margin-top:4px; }
-.medal-card .medal-sub  { font-size:0.78rem; color:#6b7280; margin-top:3px; }
-.medal-card .medal-tbl  { font-size:0.75rem; color:#9ca3af; margin-top:2px; font-family:monospace; }
+.medal-card .medal-sub  { font-size:0.78rem; color:#6b7280; margin-top:4px; line-height:1.4; }
+.medal-card .medal-tbl  { font-size:0.72rem; color:#2563eb; margin-top:2px; font-family:monospace; font-weight:600; }
 
-/* ── Status pill ── */
+/* ══ STATUS PILLS ══ */
 .status-pill {
     display:inline-flex; align-items:center; gap:6px;
-    padding:6px 14px; border-radius:20px; font-size:0.8rem; font-weight:600;
-    margin:3px 0;
+    padding:6px 14px; border-radius:20px; font-size:0.79rem; font-weight:600;
+    margin:3px 0; width:100%; box-sizing:border-box;
 }
-.status-ok  { background:#f0fdf4; color:#15803d; border:1px solid #86efac; }
-.status-err { background:#fef2f2; color:#b91c1c; border:1px solid #fca5a5; }
-.status-off { background:#f9fafb; color:#6b7280; border:1px solid #e5e7eb; }
+.status-ok  { background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; }
+.status-err { background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; }
+.status-off { background:#f8fafc; color:#64748b; border:1px solid #e2e8f0; }
 
-hr { border-color: #e5e7eb !important; margin: 16px 0; }
+/* ══ DATAFRAMES ══ */
+[data-testid="stDataFrame"] { border-radius: 12px !important; overflow: hidden !important; }
+.stDataFrame > div { border-radius: 12px !important; }
+
+/* ══ EXPANDER ══ */
+[data-testid="stExpander"] {
+    background: #ffffff; border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important; overflow: hidden;
+}
+
+/* ══ INPUTS ══ */
+[data-baseweb="input"] > div, [data-baseweb="select"] > div:first-child,
+[data-baseweb="textarea"] > div {
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+}
+[data-baseweb="input"] > div:focus-within,
+[data-baseweb="select"] > div:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1) !important;
+}
+
+hr { border-color: #e5e7eb !important; margin: 18px 0 !important; }
 ::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #f9fafb; }
-::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -392,6 +503,18 @@ _DEFAULTS = {
 for k, v in _DEFAULTS.items():
     if k not in st.session_state:
         st.session_state[k] = v
+
+# ══════════════════════════════════════════════════════════════
+# GCS MODEL SYNC — descarga PKLs al inicio si no existen localmente
+# ══════════════════════════════════════════════════════════════
+@st.cache_resource(show_spinner="Sincronizando modelos desde GCS...")
+def _sync_models_from_gcs():
+    """Descarga PKLs desde GCS la primera vez que arranca la app."""
+    if not HAS_GCP:
+        return []
+    results = sync_models_from_gcs("models")
+    return results
+
 
 # ══════════════════════════════════════════════════════════════
 # MODEL LOADERS (cached)
@@ -787,8 +910,12 @@ def _render_gcp_panel():
 # ══════════════════════════════════════════════════════════════
 def page_landing():
     with st.sidebar:
-        st.markdown("### ALDIMI-PREDICT")
-        st.markdown("---")
+        st.markdown("""
+        <div style="padding:16px 4px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom:16px;">
+          <div style="font-size:1.3rem; font-weight:800; color:#fff; letter-spacing:-0.02em;">🏥 ALDIMI</div>
+          <div style="font-size:0.72rem; color:#93c5fd; margin-top:2px;">ML PREDICT · mlaldimi</div>
+        </div>
+        """, unsafe_allow_html=True)
         st.markdown("Selecciona tu **perfil** en la pantalla principal.")
         st.markdown("---")
         st.caption("ML 1ACC0057 · UPC · GCP: mlaldimi")
@@ -860,20 +987,22 @@ def page_landing():
 # ══════════════════════════════════════════════════════════════
 def _dev_sidebar():
     with st.sidebar:
-        st.markdown("### 🏥 ALDIMI")
-        st.markdown("---")
+        st.markdown("""
+        <div style="padding:16px 4px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom:16px;">
+          <div style="font-size:1.3rem; font-weight:800; color:#fff; letter-spacing:-0.02em;">🏥 ALDIMI</div>
+          <div style="font-size:0.72rem; color:#93c5fd; margin-top:2px;">ML PREDICT · mlaldimi</div>
+        </div>
+        """, unsafe_allow_html=True)
         if st.button("← Inicio", key="back_dev", use_container_width=True):
             st.session_state.vista = "landing"; st.rerun()
-        st.markdown("---")
-        st.markdown("**Módulo**")
+        st.markdown('<div style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:rgba(147,197,253,0.6); padding: 12px 4px 6px;">MÓDULO</div>', unsafe_allow_html=True)
         modulo = st.radio(
             "", ["📦 Logística","🏥 Salud"],
             index=0 if st.session_state.modulo_dev == "logistica" else 1,
             label_visibility="collapsed",
         )
         st.session_state.modulo_dev = "logistica" if "ogística" in modulo else "salud"
-        st.markdown("---")
-        st.markdown("**GCP**")
+        st.markdown('<div style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:rgba(147,197,253,0.6); padding: 12px 4px 6px;">CONEXIÓN GCP</div>', unsafe_allow_html=True)
         st.caption("413462127752 · mlaldimi")
         if HAS_GCP:
             if st.button("Verificar GCP", key="check_gcp", use_container_width=True):
@@ -893,7 +1022,7 @@ def page_developer():
     modulo_label = "Logística" if st.session_state.modulo_dev == "logistica" else "Salud"
     icon_mod = "📦" if st.session_state.modulo_dev == "logistica" else "🏥"
     st.markdown(f"""
-    <div class="page-header">
+    <div class="page-title">
         <h1>{icon_mod} Vista Developer — <span class="accent">{modulo_label}</span></h1>
         <p>KPIs · Comparación interactiva de modelos · Exportar archivos · Sincronización BigQuery</p>
     </div>
@@ -920,6 +1049,7 @@ def _dev_logistica():
 
     # ── KPI ─────────────────────────────────────────────────────
     with t_kpi:
+        st.markdown('<div class="ui-card" style="margin-bottom:16px;">', unsafe_allow_html=True)
         c1,c2,c3,c4,c5 = st.columns(5)
         c1.metric("Mejor modelo d7",  best7["Modelo"])
         c2.metric("WAPE% demand7",    f"{best7['WAPE%']:.2f}%",
@@ -929,8 +1059,9 @@ def _dev_logistica():
         c4.metric("WAPE% demand14",   f"{best14['WAPE%']:.2f}%",
                   f"Objetivo <{KPI_TARGETS['logistica']['WAPE_demand14']}%")
         c5.metric("Acc. perecibilidad","100%","Objetivo >95%")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown("---")
+        st.markdown('<div class="ui-card" style="margin-bottom:16px;">', unsafe_allow_html=True)
         gc1, gc2 = st.columns(2)
         with gc1:
             st.plotly_chart(chart_kpi_gauge(best7["R2"], KPI_TARGETS["logistica"]["R2_demand7"],
@@ -938,6 +1069,7 @@ def _dev_logistica():
         with gc2:
             st.plotly_chart(chart_kpi_gauge(best14["R2"], KPI_TARGETS["logistica"]["R2_demand14"],
                                              "R² demand14"), use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown("#### Estado KPIs por modelo")
         tgt = KPI_TARGETS["logistica"]["WAPE_demand7"]
@@ -961,7 +1093,9 @@ def _dev_logistica():
         </div>
         """, unsafe_allow_html=True)
 
+        st.markdown('<div class="ui-card" style="margin-bottom:16px;">', unsafe_allow_html=True)
         st.plotly_chart(chart_wape_comparison(df_reg), use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown("---")
         st.markdown("#### Tabla completa de resultados")
@@ -1044,12 +1178,42 @@ def _dev_logistica():
         <div class="alert alert-gray">
         <b>Flujo de datos:</b><br>
         1. Sube el TXT/CSV crudo → <b>Bronze</b><br>
-        2. Ejecuta <code>setup_local.py</code> o los notebooks → produce datos limpios → sube a <b>Silver</b><br>
-        3. El pipeline de features genera la tabla <b>Gold</b> (fuente de entrenamiento)<br>
-        4. Los modelos <b>.pkl</b> en <code>Dashboard/models/</code> se cargan al inicio y NO se vuelven a entrenar
+        2. Ejecuta <code>setup_local.py</code> → limpieza → <b>Silver</b> → features → <b>Gold</b><br>
+        3. Los <b>.pkl</b> generados se suben a GCS con el botón de abajo<br>
+        4. Al arrancar Streamlit Cloud, los PKL se descargan automáticamente desde GCS
         </div>
         """, unsafe_allow_html=True)
 
+        # ── Gestión de modelos PKL en GCS ──
+        st.markdown("#### Modelos PKL — Cloud Storage (`gs://mlaldimi-models/`)")
+        pm1, pm2 = st.columns(2)
+        with pm1:
+            if st.button("☁️ Subir PKLs locales → GCS", key="upload_pkls", use_container_width=True):
+                if HAS_GCP:
+                    with st.spinner("Subiendo modelos..."):
+                        results = upload_all_models("models")
+                    for rel, ok, msg in results:
+                        st.markdown(f'<div class="alert alert-{"green" if ok else "red"}">'
+                                    f'{"✓" if ok else "✗"} <code>{rel}</code> — {msg}</div>',
+                                    unsafe_allow_html=True)
+                    if not results:
+                        st.warning("No se encontraron PKL en Dashboard/models/. Ejecuta setup_local.py primero.")
+                else:
+                    st.warning("GCP no disponible")
+        with pm2:
+            if st.button("⬇️ Ver PKLs en GCS", key="list_pkls", use_container_width=True):
+                if HAS_GCP:
+                    names, msg = list_models()
+                    if names:
+                        for n in names:
+                            st.markdown(f'<div class="alert alert-gray">📦 <code>{n}</code></div>',
+                                        unsafe_allow_html=True)
+                    else:
+                        st.info(f"Sin modelos en GCS aún. {msg}")
+                else:
+                    st.warning("GCP no disponible")
+
+        st.markdown("---")
         st.markdown("#### Cargar datos a BigQuery")
         uploaded = st.file_uploader("CSV/TXT de logística (ventas diarias)", type=["csv","txt"], key="gcp_log_file")
         if uploaded:
@@ -1135,18 +1299,21 @@ def _dev_salud():
             )
             m = metricas_salud(data["y_test"], best_res["y_pred"], best_res["y_prob"])
 
+            st.markdown('<div class="ui-card" style="margin-bottom:16px;">', unsafe_allow_html=True)
             c1,c2,c3,c4,c5 = st.columns(5)
             c1.metric("Mejor modelo", best_name)
             c2.metric("Accuracy",    f"{m['accuracy']:.4f}", f"Obj >{KPI_TARGETS['salud']['Accuracy']}")
             c3.metric("AUC Macro",   f"{m['auc_macro']:.4f}", f"Obj >{KPI_TARGETS['salud']['AUC_Macro']}")
             c4.metric("Recall ALTO", f"{m['recall_alto']:.4f}", "Clase crítica")
             c5.metric("F1 Macro",    f"{m['f1_macro']:.4f}",  f"Obj >{KPI_TARGETS['salud']['F1_Macro']}")
+            st.markdown('</div>', unsafe_allow_html=True)
 
-            st.markdown("---")
+            st.markdown('<div class="ui-card" style="margin-bottom:16px;">', unsafe_allow_html=True)
             gc1, gc2, gc3 = st.columns(3)
             with gc1: st.plotly_chart(chart_kpi_gauge(m["accuracy"], 0.85,"Accuracy"), use_container_width=True)
             with gc2: st.plotly_chart(chart_kpi_gauge(m["auc_macro"],0.85,"AUC Macro"), use_container_width=True)
             with gc3: st.plotly_chart(chart_kpi_gauge(m["recall_alto"],0.85,"Recall ALTO"), use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown("#### Estado KPIs por modelo")
             for nm, res in data["results"].items():
@@ -1179,7 +1346,9 @@ def _dev_salud():
     with t_cmp:
         st.markdown('<div class="alert alert-teal">MLP (64,32,16) logra el mayor AUC (0.9999). XGBoost ofrece el mejor equilibrio precisión/velocidad. Todos superan KPI ≥ 0.85.</div>',
                     unsafe_allow_html=True)
+        st.markdown('<div class="ui-card" style="margin-bottom:16px;">', unsafe_allow_html=True)
         st.plotly_chart(chart_salud_comparison(METRICAS_SALUD), use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown("---")
         st.dataframe(pd.DataFrame(METRICAS_SALUD), use_container_width=True, hide_index=True)
@@ -1344,17 +1513,21 @@ def _dev_salud():
 def page_trabajador():
     # Minimal sidebar — navigation only
     with st.sidebar:
-        st.markdown("### 🏥 ALDIMI")
-        st.markdown("---")
+        st.markdown("""
+        <div style="padding:16px 4px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom:16px;">
+          <div style="font-size:1.3rem; font-weight:800; color:#fff; letter-spacing:-0.02em;">🏥 ALDIMI</div>
+          <div style="font-size:0.72rem; color:#93c5fd; margin-top:2px;">ML PREDICT · mlaldimi</div>
+        </div>
+        """, unsafe_allow_html=True)
         if st.button("← Inicio", key="back_worker", use_container_width=True):
             st.session_state.vista = "landing"; st.rerun()
-        st.markdown("---")
+        st.markdown('<div style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:rgba(147,197,253,0.6); padding: 12px 4px 6px;">MÓDULO</div>', unsafe_allow_html=True)
         st.caption("Vista Trabajador")
         st.caption("Clasificación oncológica")
         st.caption("+ Plan nutricional")
 
     st.markdown("""
-    <div class="page-header">
+    <div class="page-title">
         <h1>👩‍⚕️ Vista Trabajador</h1>
         <p>Clasificación oncológica · Plan nutricional personalizado · Historial de pacientes</p>
     </div>
@@ -1573,12 +1746,16 @@ def page_trabajador():
             totales     = [round(v * n_pac * n_dias, 2) for v in por_dia]
             por_pac_dia = [round(v * n_pac, 2) for v in por_dia]
 
+            import re as _re
+            _strip = lambda s: _re.sub(r'[^\w\s/()\-\.%]', '', s).strip()
             df_canasta = pd.DataFrame({
                 "Alimento": items,
                 "Por paciente/día": por_dia,
                 f"Total {n_pac} pac/día": por_pac_dia,
                 f"Total {n_dias} días": totales,
             })
+            df_canasta_csv = df_canasta.copy()
+            df_canasta_csv["Alimento"] = df_canasta_csv["Alimento"].apply(_strip)
             st.dataframe(df_canasta, use_container_width=True, hide_index=True)
 
             st.plotly_chart(chart_nutrition_basket(nivel_sel, n_pac, n_dias), use_container_width=True)
@@ -1641,9 +1818,9 @@ def page_trabajador():
         with ex2:
             st.download_button(
                 "⬇ Descargar Canasta (CSV)",
-                data=df_canasta.to_csv(index=False).encode(),
+                data=df_canasta_csv.to_csv(index=False, encoding="utf-8").encode("utf-8"),
                 file_name=f"canasta_{nivel_sel.lower()}_{n_pac}pac_{datetime.now().strftime('%Y%m%d')}.csv",
-                mime="text/csv", use_container_width=True
+                mime="text/csv; charset=utf-8", use_container_width=True
             )
 
         # Multi-level planning
@@ -1747,6 +1924,9 @@ def page_trabajador():
 # MAIN ROUTING
 # ══════════════════════════════════════════════════════════════
 def main():
+    # Descarga modelos PKL desde GCS si no existen localmente (solo la primera vez)
+    _sync_models_from_gcs()
+
     v = st.session_state.vista
     if v == "landing":
         page_landing()
