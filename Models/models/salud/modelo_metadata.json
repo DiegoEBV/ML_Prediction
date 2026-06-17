@@ -1,71 +1,86 @@
 {
-  "generado": "2025-06-16",
+  "generado": "2026-06-17T12:24:10.829801",
+  "fuente": "kaggle",
   "gcp_project": "413462127752",
   "gcp_dataset": "mlaldimi",
   "tabla_gold": "mlaldimi.mlaldimi.gold_salud",
+  "feature_cols": [
+    "Age",
+    "Year",
+    "Genetic_Risk",
+    "Air_Pollution",
+    "Alcohol_Use",
+    "Smoking",
+    "Obesity_Level",
+    "Cancer_Stage",
+    "Treatment_Cost_USD",
+    "Survival_Years",
+    "Gender_Male",
+    "Gender_Other",
+    "Country_Region_Brazil",
+    "Country_Region_Canada",
+    "Country_Region_China",
+    "Country_Region_Germany",
+    "Country_Region_India",
+    "Country_Region_Pakistan",
+    "Country_Region_Russia",
+    "Country_Region_UK",
+    "Country_Region_USA",
+    "Cancer_Type_Cervical",
+    "Cancer_Type_Colon",
+    "Cancer_Type_Leukemia",
+    "Cancer_Type_Liver",
+    "Cancer_Type_Lung",
+    "Cancer_Type_Prostate",
+    "Cancer_Type_Skin"
+  ],
+  "n_train": 35000,
+  "n_test": 15000,
   "mejor_modelo": "XGBoost",
   "hiperparametros": {
     "xgb": {
-      "n_estimators": 200,
-      "max_depth": 6,
-      "learning_rate": 0.1,
-      "subsample": 0.8,
       "colsample_bytree": 0.8,
-      "use_label_encoder": false,
-      "eval_metric": "mlogloss",
-      "scale_pos_weight": 1
+      "learning_rate": 0.1,
+      "max_depth": 4,
+      "min_child_weight": 1,
+      "n_estimators": 200,
+      "reg_alpha": 0.0,
+      "subsample": 0.8
     },
     "rf": {
-      "n_estimators": 200,
-      "max_depth": 15,
+      "class_weight": "balanced",
+      "max_depth": null,
+      "max_features": 0.5,
       "min_samples_leaf": 1,
-      "class_weight": "balanced"
-    },
-    "mlp": {
-      "hidden_layer_sizes": [64, 32, 16],
-      "max_iter": 500,
-      "early_stopping": true,
-      "validation_fraction": 0.1,
-      "learning_rate_init": 0.001,
-      "alpha": 0.0001
+      "n_estimators": 200
     }
-  },
-  "kpi_targets": {
-    "Accuracy":    0.85,
-    "F1_Macro":    0.85,
-    "AUC_Macro":   0.85,
-    "Recall_Alto": 0.85,
-    "nota": "Recall_Alto es la metrica critica — minimizar falsos negativos en clase de alto riesgo"
   },
   "resultados": [
     {
       "Modelo": "XGBoost",
-      "Accuracy": 0.9872, "F1_Macro": 0.9869, "AUC_Macro": 0.9997,
-      "Recall_Bajo": 0.9921, "Recall_Medio": 0.9856, "Recall_Alto": 0.9821,
-      "KPI_Acc_OK": true, "KPI_AUC_OK": true, "KPI_RecAlto_OK": true
+      "Accuracy": 0.9801,
+      "F1_Macro": 0.9211,
+      "AUC_Macro": 0.9989,
+      "Recall_Alto": 0.8079
     },
     {
       "Modelo": "Random Forest",
-      "Accuracy": 0.9654, "F1_Macro": 0.9641, "AUC_Macro": 0.9988,
-      "Recall_Bajo": 0.9712, "Recall_Medio": 0.9601, "Recall_Alto": 0.9512,
-      "KPI_Acc_OK": true, "KPI_AUC_OK": true, "KPI_RecAlto_OK": true
+      "Accuracy": 0.9619,
+      "F1_Macro": 0.8673,
+      "AUC_Macro": 0.9923,
+      "Recall_Alto": 0.8306
     },
     {
       "Modelo": "MLP (64,32,16)",
-      "Accuracy": 0.9944, "F1_Macro": 0.9942, "AUC_Macro": 0.9999,
-      "Recall_Bajo": 0.9981, "Recall_Medio": 0.9921, "Recall_Alto": 0.9756,
-      "KPI_Acc_OK": true, "KPI_AUC_OK": true, "KPI_RecAlto_OK": true
+      "Accuracy": 0.9833,
+      "F1_Macro": 0.9376,
+      "AUC_Macro": 0.9985,
+      "Recall_Alto": 0.8759
     }
   ],
-  "cv_k5": {
-    "XGBoost":      {"Accuracy_mean": 0.9858, "Accuracy_std": 0.0021, "F1_mean": 0.9851, "F1_std": 0.0024},
-    "RandomForest": {"Accuracy_mean": 0.9641, "Accuracy_std": 0.0038, "F1_mean": 0.9628, "F1_std": 0.0041}
-  },
-  "archivos_pkl": {
-    "xgb":          "Dashboard/models/xgb_salud.pkl",
-    "rf":           "Dashboard/models/rf_salud.pkl",
-    "mlp":          "Dashboard/models/mlp_salud.pkl",
-    "scaler":       "Dashboard/models/scaler_salud.pkl",
-    "feature_cols": "Dashboard/models/feature_cols_salud.pkl"
+  "kpi_targets": {
+    "Accuracy": 0.85,
+    "AUC_Macro": 0.85,
+    "Recall_Alto": 0.85
   }
 }
