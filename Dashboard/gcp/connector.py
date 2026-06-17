@@ -4,9 +4,10 @@ GCP BigQuery connector — arquitectura medallion Bronze / Silver / Gold
 Proyecto: 413462127752 | Dataset: mlaldimi
 
 Autenticacion (en orden de prioridad):
-  1. Variable GOOGLE_APPLICATION_CREDENTIALS apuntando al JSON de service account
-  2. Archivo secrets/gcp_service_account.json junto a este modulo
-  3. Application Default Credentials (gcloud auth application-default login)
+  1. st.secrets["gcp_adc"]  — OAuth2 ADC guardado en Streamlit Cloud secrets
+  2. GOOGLE_APPLICATION_CREDENTIALS — variable de entorno (service account JSON)
+  3. gcp/secrets/gcp_service_account.json — archivo local (service account)
+  4. Application Default Credentials — gcloud auth application-default login
 """
 
 import os
@@ -27,26 +28,46 @@ TABLE_SILVER_LOGISTICA = f"{GCP_PROJECT}.{DATASET_ID}.silver_logistica"
 TABLE_GOLD_SALUD       = f"{GCP_PROJECT}.{DATASET_ID}.gold_salud"
 TABLE_GOLD_LOGISTICA   = f"{GCP_PROJECT}.{DATASET_ID}.gold_logistica"
 
-# Ruta al JSON de service account junto a este archivo
-_SA_FILE = os.path.join(os.path.dirname(__file__), "secrets", "gcp_service_account.json")
-
+_SA_FILE   = os.path.join(os.path.dirname(__file__), "secrets", "gcp_service_account.json")
 _BQ_CLIENT = None
 
 
 def _resolve_credentials():
     """
-    Resuelve credenciales GCP en orden de prioridad:
-      1. GOOGLE_APPLICATION_CREDENTIALS (variable de entorno)
-      2. gcp/secrets/gcp_service_account.json
-      3. Application Default Credentials (ADC)
-    Devuelve (credentials_obj | None, error_str | None)
+    Resuelve credenciales GCP en orden de prioridad.
+    Retorna (credentials_obj | None, descripcion_str, error_str | None).
     """
-    # 1. Variable de entorno ya configurada -> BigQuery la usará automáticamente
+    # 1. st.secrets["gcp_adc"] — OAuth2 refresh token (Streamlit Cloud)
+    try:
+        import streamlit as st
+        if "gcp_adc" in st.secrets:
+            adc = dict(st.secrets["gcp_adc"])
+            if adc.get("type") == "authorized_user":
+                from google.oauth2.credentials import Credentials
+                creds = Credentials(
+                    token=None,
+                    refresh_token=adc["refresh_token"],
+                    client_id=adc["client_id"],
+                    client_secret=adc["client_secret"],
+                    token_uri="https://oauth2.googleapis.com/token",
+                )
+                return creds, "st.secrets[gcp_adc] — OAuth2 ADC", None
+            elif adc.get("type") == "service_account":
+                from google.oauth2 import service_account
+                creds = service_account.Credentials.from_service_account_info(
+                    adc,
+                    scopes=["https://www.googleapis.com/auth/bigquery"],
+                )
+                return creds, "st.secrets[gcp_adc] — Service Account", None
+    except Exception:
+        pass
+
+    # 2. Variable de entorno GOOGLE_APPLICATION_CREDENTIALS
     env_creds = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
     if env_creds and os.path.exists(env_creds):
-        return None, None  # bigquery.Client() la tomará solo
+        return None, f"GOOGLE_APPLICATION_CREDENTIALS: {env_creds}", None
 
-    # 2. Archivo local secrets/
+    # 3. Archivo local secrets/gcp_service_account.json
     if os.path.exists(_SA_FILE):
         try:
             from google.oauth2 import service_account
@@ -54,12 +75,12 @@ def _resolve_credentials():
                 _SA_FILE,
                 scopes=["https://www.googleapis.com/auth/bigquery"],
             )
-            return creds, None
+            return creds, f"Service Account local: {_SA_FILE}", None
         except Exception as e:
-            return None, f"Error cargando service account: {e}"
+            return None, "", f"Error cargando service account: {e}"
 
-    # 3. ADC (funciona si ya se ejecutó `gcloud auth application-default login`)
-    return None, None
+    # 4. ADC — gcloud auth application-default login
+    return None, "Application Default Credentials (gcloud ADC)", None
 
 
 def _get_client():
@@ -68,10 +89,10 @@ def _get_client():
         return _BQ_CLIENT, None
     try:
         from google.cloud import bigquery
-        creds, err = _resolve_credentials()
+        creds, _, err = _resolve_credentials()
         if err:
             return None, err
-        _BQ_CLIENT = bigquery.Client(project=GCP_PROJECT, credentials=creds)
+        _BQ_CLIENT = bigquery.Client(project=GCP_PROJECT_ID, credentials=creds)
         return _BQ_CLIENT, None
     except ImportError:
         return None, "google-cloud-bigquery no instalado. Ejecuta: pip install google-cloud-bigquery"
@@ -80,13 +101,10 @@ def _get_client():
 
 
 def get_auth_method() -> str:
-    """Devuelve descripcion del metodo de autenticacion activo."""
-    env_creds = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
-    if env_creds and os.path.exists(env_creds):
-        return f"Service Account via GOOGLE_APPLICATION_CREDENTIALS: {env_creds}"
-    if os.path.exists(_SA_FILE):
-        return f"Service Account via archivo local: {_SA_FILE}"
-    return "Application Default Credentials (ADC / gcloud)"
+    _, desc, err = _resolve_credentials()
+    if err:
+        return f"Error: {err}"
+    return desc or "ADC"
 
 
 def check_connection() -> tuple[bool, str]:
@@ -95,9 +113,10 @@ def check_connection() -> tuple[bool, str]:
         return False, err
     try:
         list(client.list_datasets())
-        return True, f"Conectado a GCP BigQuery ({GCP_PROJECT_ID}) | {get_auth_method()}"
+        return True, f"Conectado — {get_auth_method()}"
     except Exception as e:
         return False, f"Error de conexion: {e}"
+
 
 
 # ─────────────────────────────────────────────
