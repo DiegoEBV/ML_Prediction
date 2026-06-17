@@ -10,6 +10,7 @@ Dashboard/gcp/secrets/gcp_service_account.json
 # Exports locales
 Dashboard/kpi_exports/
 
-# Ignorar datasets extremadamente grandes (>100MB)
-data/favorita_aldimi_limpio.txt
-
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
