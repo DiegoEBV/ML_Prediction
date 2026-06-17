@@ -63,70 +63,93 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-*, html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
+*, html, body { font-family: 'Inter', sans-serif !important; }
 
-/* ══ FONDO PRINCIPAL — azul gris muy claro ══ */
-.main { background: #EEF2FF !important; }
-[data-testid="stAppViewContainer"] { background: #EEF2FF !important; }
-[data-testid="stAppViewContainer"] > section > div { background: #EEF2FF !important; }
+/* ══ OCULTAR toggle sidebar y artefactos ══ */
+button[data-testid="stSidebarCollapseButton"],
+button[data-testid="stBaseButton-headerNoPadding"] { display: none !important; }
+
+/* ══ FONDO PRINCIPAL ══ */
+.stApp,
+.stApp > div,
+[data-testid="stAppViewContainer"],
+[data-testid="stAppViewContainer"] > .main,
+.main {
+    background-color: #EEF2FF !important;
+}
 .main .block-container {
-    padding: 1.8rem 2rem 2.5rem !important;
+    padding: 2rem 2.2rem 3rem !important;
     max-width: 1440px !important;
+    background: transparent !important;
 }
 
-/* ══ SIDEBAR — azul oscuro gradiente médico SaaS ══ */
-[data-testid="stSidebar"] {
+/* ══ SIDEBAR — azul oscuro (TODOS los selectores posibles) ══ */
+section[data-testid="stSidebar"],
+section[data-testid="stSidebar"] > div,
+section[data-testid="stSidebar"] > div:first-child,
+[data-testid="stSidebar"],
+[data-testid="stSidebar"] > div {
     background: linear-gradient(180deg, #1e3a8a 0%, #1d4ed8 100%) !important;
     border-right: none !important;
 }
-[data-testid="stSidebar"] > div { padding-top: 0 !important; }
-
-/* Texto sidebar */
-[data-testid="stSidebar"] * { color: #bfdbfe !important; }
-[data-testid="stSidebar"] h1,[data-testid="stSidebar"] h2,[data-testid="stSidebar"] h3 {
-    color: #ffffff !important; font-weight: 700 !important; letter-spacing: -0.01em !important;
+section[data-testid="stSidebar"] > div:first-child {
+    min-height: 100vh !important;
+    padding-top: 0 !important;
 }
-[data-testid="stSidebar"] label { color: #93c5fd !important; font-size: 0.8rem !important; font-weight: 500 !important; }
-[data-testid="stSidebar"] p, [data-testid="stSidebar"] span { color: #bfdbfe !important; }
-[data-testid="stSidebar"] small, [data-testid="stSidebar"] .stCaption { color: #7dd3fc !important; opacity: 0.8; }
 
-/* Separador sidebar */
-[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.15) !important; margin: 10px 0 !important; }
-
-/* Radio buttons sidebar — nav items estilo SaaS */
-[data-testid="stSidebar"] .stRadio > div { gap: 4px !important; }
-[data-testid="stSidebar"] .stRadio label {
-    background: rgba(255,255,255,0.07) !important;
-    border: 1px solid rgba(255,255,255,0.12) !important;
-    border-radius: 10px !important;
-    padding: 9px 14px !important;
+/* Todo el texto del sidebar */
+section[data-testid="stSidebar"] *,
+[data-testid="stSidebar"] * {
     color: #bfdbfe !important;
+    font-family: 'Inter', sans-serif !important;
+}
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3,
+section[data-testid="stSidebar"] strong {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+section[data-testid="stSidebar"] label {
+    color: #93c5fd !important;
+    font-size: 0.8rem !important;
     font-weight: 500 !important;
+}
+section[data-testid="stSidebar"] hr {
+    border-color: rgba(255,255,255,0.15) !important;
+    margin: 8px 0 !important;
+}
+
+/* Radio nav items */
+section[data-testid="stSidebar"] .stRadio > div { gap: 3px !important; }
+section[data-testid="stSidebar"] .stRadio label {
+    background: rgba(255,255,255,0.08) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-radius: 10px !important;
+    padding: 8px 14px !important;
+    color: #dbeafe !important;
+    font-weight: 500 !important;
+    margin: 1px 0 !important;
     transition: all 0.15s !important;
+    cursor: pointer !important;
 }
-[data-testid="stSidebar"] .stRadio label:hover {
-    background: rgba(255,255,255,0.14) !important;
-    border-color: rgba(255,255,255,0.28) !important;
-}
-[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] input:checked ~ div {
-    background: rgba(255,255,255,0.22) !important;
-    border-color: #93c5fd !important;
+section[data-testid="stSidebar"] .stRadio label:hover {
+    background: rgba(255,255,255,0.16) !important;
+    color: #ffffff !important;
 }
 
 /* Botones sidebar */
-[data-testid="stSidebar"] .stButton > button {
+section[data-testid="stSidebar"] .stButton > button {
     background: rgba(255,255,255,0.12) !important;
     color: #ffffff !important;
-    border: 1px solid rgba(255,255,255,0.25) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
     border-radius: 10px !important;
     font-weight: 600 !important;
-    transition: all 0.15s !important;
     box-shadow: none !important;
-}
-[data-testid="stSidebar"] .stButton > button:hover {
-    background: rgba(255,255,255,0.22) !important;
-    border-color: rgba(255,255,255,0.4) !important;
     transform: none !important;
+}
+section[data-testid="stSidebar"] .stButton > button:hover {
+    background: rgba(255,255,255,0.22) !important;
 }
 
 /* ══ MÉTRICAS ══ */
@@ -920,64 +943,87 @@ def page_landing():
         st.markdown("---")
         st.caption("ML 1ACC0057 · UPC · GCP: mlaldimi")
 
+    # ── Greeting header ──
     st.markdown("""
-    <div style="text-align:center;padding:40px 20px 32px;">
-        <div style="font-size:3rem;margin-bottom:8px;">🏥</div>
-        <h1 style="font-size:2rem;font-weight:800;color:#111827;margin:0;letter-spacing:-0.02em;">ALDIMI-PREDICT</h1>
-        <p style="font-size:0.95rem;color:#6b7280;margin:8px 0 4px;">Plataforma integral de predicción con Machine Learning</p>
-        <p style="font-size:0.78rem;color:#9ca3af;">ML 1ACC0057 · UPC · GCP: mlaldimi (413462127752)</p>
+    <div style="margin-bottom:32px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
+            <span style="font-size:2.4rem;">🏥</span>
+            <div>
+                <h1 style="font-size:1.9rem;font-weight:800;color:#111827;margin:0;letter-spacing:-0.03em;">ALDIMI-PREDICT</h1>
+                <p style="font-size:0.9rem;color:#6b7280;margin:2px 0 0;">Plataforma de Machine Learning · Salud Oncológica & Logística</p>
+            </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+            <span style="background:#dbeafe;color:#1e40af;border-radius:20px;padding:3px 12px;font-size:0.75rem;font-weight:600;">ML 1ACC0057</span>
+            <span style="background:#f0fdf4;color:#15803d;border-radius:20px;padding:3px 12px;font-size:0.75rem;font-weight:600;">GCP: mlaldimi</span>
+            <span style="background:#f3f4f6;color:#374151;border-radius:20px;padding:3px 12px;font-size:0.75rem;font-weight:600;">413462127752</span>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
+    # ── Role cards ──
     col1, col2 = st.columns(2, gap="large")
 
     with col1:
         st.markdown("""
-        <div class="role-card role-card-dev">
-            <div class="role-icon">🛠️</div>
-            <h2>Vista Developer</h2>
-            <p>
-                Indicadores KPI · Comparación interactiva de modelos ·
-                Exportación de archivos KPI (JSON/CSV) ·
-                Sincronización GCP Bronze / Silver / Gold ·
-                Ingreso manual de datos
-            </p>
-            <span class="badge badge-dev">Developers / Analistas de datos</span>
+        <div style="background:#ffffff;border-radius:16px;padding:28px 26px 20px;
+                    box-shadow:0 2px 12px rgba(30,58,138,0.10);border-top:4px solid #2563eb;
+                    margin-bottom:12px;min-height:180px;">
+            <div style="font-size:2.2rem;margin-bottom:10px;">🛠️</div>
+            <div style="font-size:1.15rem;font-weight:800;color:#111827;margin-bottom:8px;">Vista Developer</div>
+            <div style="font-size:0.84rem;color:#6b7280;line-height:1.6;">
+                KPIs interactivos · Comparación de modelos · Exportar JSON/CSV ·
+                Sincronización BigQuery (Bronze / Silver / Gold)
+            </div>
+            <span style="display:inline-block;margin-top:14px;background:#dbeafe;color:#1e40af;
+                         border-radius:20px;padding:3px 14px;font-size:0.73rem;font-weight:700;">
+                Developers / Analistas
+            </span>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("Ingresar como Developer 🛠️", key="btn_dev", use_container_width=True):
+        if st.button("Ingresar como Developer", key="btn_dev", use_container_width=True):
             st.session_state.vista = "developer"; st.rerun()
 
     with col2:
         st.markdown("""
-        <div class="role-card role-card-worker">
-            <div class="role-icon">👩‍⚕️</div>
-            <h2>Vista Trabajador</h2>
-            <p>
-                Clasificación oncológica individual ·
-                Plan nutricional personalizado por nivel de riesgo ·
-                Historial de pacientes · Recomendaciones dietéticas
-            </p>
-            <span class="badge badge-worker">Personal de ALDIMI / Nutricionistas</span>
+        <div style="background:#ffffff;border-radius:16px;padding:28px 26px 20px;
+                    box-shadow:0 2px 12px rgba(124,58,237,0.10);border-top:4px solid #7c3aed;
+                    margin-bottom:12px;min-height:180px;">
+            <div style="font-size:2.2rem;margin-bottom:10px;">👩‍⚕️</div>
+            <div style="font-size:1.15rem;font-weight:800;color:#111827;margin-bottom:8px;">Vista Trabajador</div>
+            <div style="font-size:0.84rem;color:#6b7280;line-height:1.6;">
+                Clasificación oncológica individual · Plan nutricional por nivel de riesgo ·
+                Historial de pacientes · Canasta de alimentos
+            </div>
+            <span style="display:inline-block;margin-top:14px;background:#ede9fe;color:#5b21b6;
+                         border-radius:20px;padding:3px 14px;font-size:0.73rem;font-weight:700;">
+                Personal ALDIMI / Nutricionistas
+            </span>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("Ingresar como Trabajador 👩‍⚕️", key="btn_worker", use_container_width=True):
+        if st.button("Ingresar como Trabajador", key="btn_worker", use_container_width=True):
             st.session_state.vista = "trabajador"; st.rerun()
 
-    st.markdown("---")
-    st.markdown('<p style="font-size:0.82rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;">ARQUITECTURA MEDALLION — BigQuery mlaldimi</p>', unsafe_allow_html=True)
-    ca, cb, cc = st.columns(3)
-    for col, icon, name, tbl, desc in [
-        (ca,"🥉","Bronze","bronze_salud / bronze_logistica","Datos crudos — CSV/TXT subidos desde el dashboard"),
-        (cb,"🥈","Silver","silver_salud / silver_logistica","Datos limpios — salida de los notebooks de limpieza"),
-        (cc,"🥇","Gold",  "gold_salud / gold_logistica",   "Features ML — fuente de los modelos entrenados"),
+    # ── Arquitectura BigQuery ──
+    st.markdown("""
+    <div style="margin-top:28px;margin-bottom:10px;">
+        <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;
+                    color:#9ca3af;margin-bottom:14px;">ARQUITECTURA MEDALLION — BIGQUERY</div>
+    </div>
+    """, unsafe_allow_html=True)
+    ca, cb, cc = st.columns(3, gap="medium")
+    for col, color, icon, name, tbl, desc in [
+        (ca,"#f59e0b","🥉","Bronze","bronze_salud / bronze_logistica","Datos crudos ingestados"),
+        (cb,"#94a3b8","🥈","Silver","silver_salud / silver_logistica","Limpieza y validación"),
+        (cc,"#eab308","🥇","Gold",  "gold_salud / gold_logistica",   "Features ML listos"),
     ]:
         col.markdown(
-            f'<div class="medal-card">'
-            f'<div class="medal-icon">{icon}</div>'
-            f'<div class="medal-name">{name}</div>'
-            f'<div class="medal-tbl">{tbl}</div>'
-            f'<div class="medal-sub" style="margin-top:6px;">{desc}</div>'
+            f'<div style="background:#ffffff;border-radius:14px;padding:18px 16px;'
+            f'box-shadow:0 1px 6px rgba(0,0,0,0.06);border-top:3px solid {color};text-align:center;">'
+            f'<div style="font-size:1.6rem;">{icon}</div>'
+            f'<div style="font-weight:700;color:#111827;font-size:0.95rem;margin-top:6px;">{name}</div>'
+            f'<div style="font-size:0.72rem;color:#2563eb;font-family:monospace;font-weight:600;margin-top:3px;">{tbl}</div>'
+            f'<div style="font-size:0.78rem;color:#6b7280;margin-top:5px;">{desc}</div>'
             f'</div>', unsafe_allow_html=True
         )
 
