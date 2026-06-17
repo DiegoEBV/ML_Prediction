@@ -1,51 +1,63 @@
 {
-  "generado": "2025-06-16",
+  "generado": "2026-06-17T12:27:50.671288",
+  "fuente": "synthetic_demo",
   "gcp_project": "413462127752",
   "gcp_dataset": "mlaldimi",
   "tabla_gold": "mlaldimi.mlaldimi.gold_logistica",
   "features": [
-    "lag_1", "lag_7", "lag_14", "media_7d", "media_14d", "std_7d",
-    "log_unit_sales", "onpromotion",
-    "dcoilwtico_scaled", "n_transactions_scaled",
-    "es_festivo", "dia_semana", "es_finde",
-    "mes", "semana_anio", "anio", "trimestre",
-    "store_type_enc", "family_enc", "city_enc", "cluster"
+    "lag_1",
+    "lag_7",
+    "lag_14",
+    "media_7d",
+    "media_14d",
+    "std_7d",
+    "log_unit_sales",
+    "onpromotion",
+    "dcoilwtico_scaled",
+    "n_transactions_scaled",
+    "es_festivo",
+    "dia_semana",
+    "es_finde",
+    "mes",
+    "semana_anio",
+    "anio",
+    "trimestre",
+    "store_type_enc",
+    "family_enc",
+    "city_enc",
+    "cluster"
   ],
+  "n_train": 40000,
+  "n_test": 10000,
   "mejor_reg_d7": "XGBoost",
   "mejor_reg_d14": "XGBoost",
   "mejor_cls": "XGBoost",
   "hiperparametros": {
     "xgb_d7": {
-      "n_estimators": 400,
-      "max_depth": 6,
-      "learning_rate": 0.05,
-      "subsample": 0.8,
       "colsample_bytree": 0.8,
-      "min_child_weight": 5,
-      "reg_alpha": 0.1,
-      "reg_lambda": 1.0
+      "learning_rate": 0.05,
+      "max_depth": 4,
+      "min_child_weight": 3,
+      "n_estimators": 200,
+      "reg_alpha": 0.0,
+      "reg_lambda": 1.0,
+      "subsample": 0.8
     },
     "xgb_d14": {
-      "n_estimators": 400,
-      "max_depth": 6,
-      "learning_rate": 0.05,
-      "subsample": 0.8,
       "colsample_bytree": 0.8,
-      "min_child_weight": 5,
-      "reg_alpha": 0.1,
-      "reg_lambda": 1.0
+      "learning_rate": 0.05,
+      "max_depth": 4,
+      "min_child_weight": 3,
+      "n_estimators": 200,
+      "reg_alpha": 0.0,
+      "reg_lambda": 1.0,
+      "subsample": 0.8
     },
     "rf_d7": {
-      "n_estimators": 200,
-      "max_depth": 12,
-      "min_samples_leaf": 5,
-      "max_features": "sqrt"
-    },
-    "xgb_perece": {
-      "n_estimators": 200,
-      "max_depth": 6,
-      "learning_rate": 0.1,
-      "subsample": 0.8
+      "max_depth": 8,
+      "max_features": "sqrt",
+      "min_samples_leaf": 3,
+      "n_estimators": 100
     }
   },
   "kpi_targets": {
@@ -58,30 +70,60 @@
   },
   "resultados": {
     "demand7": [
-      {"Modelo": "XGBoost",       "WAPE%": 16.45, "R2": 0.9298, "MAE": 9.87,  "RMSE": 14.21},
-      {"Modelo": "Random Forest", "WAPE%": 17.12, "R2": 0.9241, "MAE": 10.44, "RMSE": 14.98},
-      {"Modelo": "LightGBM",      "WAPE%": 18.13, "R2": 0.9123, "MAE": 11.06, "RMSE": 16.09}
+      {
+        "Modelo": "XGBoost d7",
+        "WAPE%": 0.0,
+        "R2": 1.0,
+        "MAE": 0.0,
+        "RMSE": 0.0
+      },
+      {
+        "Modelo": "Random Forest d7",
+        "WAPE%": 0.0,
+        "R2": 1.0,
+        "MAE": 0.0,
+        "RMSE": 0.0
+      },
+      {
+        "Modelo": "LightGBM d7",
+        "WAPE%": 0.0,
+        "R2": 1.0,
+        "MAE": 0.0,
+        "RMSE": 0.0
+      }
     ],
     "demand14": [
-      {"Modelo": "XGBoost",       "WAPE%": 14.62, "R2": 0.9412, "MAE": 17.53, "RMSE": 25.84},
-      {"Modelo": "Random Forest", "WAPE%": 15.33, "R2": 0.9358, "MAE": 18.41, "RMSE": 27.02},
-      {"Modelo": "LightGBM",      "WAPE%": 16.17, "R2": 0.9270, "MAE": 19.46, "RMSE": 28.73}
+      {
+        "Modelo": "XGBoost d14",
+        "WAPE%": 0.0,
+        "R2": 1.0,
+        "MAE": 0.0,
+        "RMSE": 0.0
+      },
+      {
+        "Modelo": "Random Forest d14",
+        "WAPE%": 0.0,
+        "R2": 1.0,
+        "MAE": 0.0,
+        "RMSE": 0.0
+      },
+      {
+        "Modelo": "LightGBM d14",
+        "WAPE%": 0.0,
+        "R2": 1.0,
+        "MAE": 0.0,
+        "RMSE": 0.0
+      }
     ],
     "perece": {
-      "XGBoost":      {"Accuracy": 1.0, "AUC": 1.0},
-      "RandomForest": {"Accuracy": 1.0, "AUC": 1.0},
-      "LightGBM":     {"Accuracy": 1.0, "AUC": 1.0}
+      "XGBoost": {
+        "Acc": 0.5274,
+        "AUC": 0.5007
+      },
+      "RF": {
+        "Acc": 0.5498,
+        "AUC": 0.5001
+      }
     }
-  },
-  "cv_k5_demand7": {
-    "XGBoost":      {"MAE_mean": 9.91, "MAE_std": 0.42, "R2_mean": 0.9281, "R2_std": 0.0031},
-    "RandomForest": {"MAE_mean": 10.52, "MAE_std": 0.55, "R2_mean": 0.9215, "R2_std": 0.0048}
-  },
-  "archivos_pkl": {
-    "regresion_demand7":  "Dashboard/models/favorita_modelos/xgb_demand7.pkl",
-    "regresion_demand14": "Dashboard/models/favorita_modelos/xgb_demand14.pkl",
-    "rf_demand7":         "Dashboard/models/favorita_modelos/rf_demand7.pkl",
-    "rf_demand14":        "Dashboard/models/favorita_modelos/rf_demand14.pkl",
-    "clasificacion_perece": "Dashboard/models/favorita_modelos/xgb_perece.pkl"
   }
 }
