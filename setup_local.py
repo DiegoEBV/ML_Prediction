@@ -1,8 +1,9 @@
 """
 setup_local.py — Pipeline completo para Windows/Mac/Linux
 Uso:
-    python setup_local.py --salud ruta/cancer.csv --logistica ruta/favorita.csv
-    python setup_local.py  # busca los CSV en la carpeta actual automáticamente
+    python setup_local.py --salud ruta/cancer.txt --logistica ruta/favorita.txt
+    python setup_local.py  # busca los archivos en la carpeta actual automáticamente
+Soporta: .csv y .txt (ambos separados por coma)
 """
 import argparse
 import os
@@ -68,7 +69,7 @@ def step_upload_bronze(csv_salud, csv_logistica, has_gcp):
             warn(f"Archivo no encontrado para {label}: {csv_path}")
             return
         info(f"Leyendo {csv_path} ...")
-        df = pd.read_csv(csv_path, low_memory=False)
+        df = pd.read_csv(csv_path, sep=",", low_memory=False)
         dest = f"{PROJECT}.{DATASET}.{table_id}"
         job  = client.load_table_from_dataframe(
             df, dest,
@@ -89,18 +90,19 @@ def step_copy_csvs(csv_salud, csv_logistica):
     data_dir.mkdir(parents=True, exist_ok=True)
 
     if csv_salud and Path(csv_salud).exists():
+        # siempre guarda como .csv para que los notebooks lo lean igual
         dst = data_dir / "global_cancer_patients_2015_2024.csv"
         shutil.copy2(csv_salud, dst)
         ok(f"Copiado a {dst}")
     else:
-        warn("CSV Salud no encontrado — notebook usará datos sintéticos")
+        warn("Archivo Salud no encontrado — notebook usará datos sintéticos")
 
     if csv_logistica and Path(csv_logistica).exists():
         dst = data_dir / "favorita_aldimi_limpio.csv"
         shutil.copy2(csv_logistica, dst)
         ok(f"Copiado a {dst}")
     else:
-        warn("CSV Logística no encontrado — notebook usará datos sintéticos")
+        warn("Archivo Logística no encontrado — notebook usará datos sintéticos")
 
 # ── 5. Ejecutar notebooks ──────────────────────────────────────────────────────
 def step_run_notebooks():
@@ -158,11 +160,24 @@ def step_verify_pkls():
     return all_ok
 
 # ── Main ───────────────────────────────────────────────────────────────────────
-def find_csv(pattern, folder="."):
-    """Busca un CSV por nombre parcial en la carpeta actual."""
-    for f in Path(folder).glob("*.csv"):
-        if pattern.lower() in f.name.lower():
-            return str(f)
+def read_data(path):
+    """Lee CSV o TXT con separador coma."""
+    import pandas as pd
+    return pd.read_csv(path, sep=",", low_memory=False)
+
+def find_csv(pattern):
+    """Busca .csv o .txt por nombre parcial en varias carpetas del repo."""
+    search_dirs = [
+        ROOT,
+        ROOT / "Dashboard" / "data",
+        ROOT / "Dashboard",
+        Path("."),
+    ]
+    for folder in search_dirs:
+        for ext in ("*.csv", "*.txt"):
+            for f in Path(folder).glob(ext):
+                if pattern.lower() in f.name.lower():
+                    return str(f)
     return None
 
 def main():
@@ -179,10 +194,10 @@ def main():
 
     # Buscar CSVs automáticamente si no se pasan como argumento
     csv_salud = args.salud or find_csv("cancer") or find_csv("salud")
-    csv_log   = args.logistica or find_csv("favorita") or find_csv("logistica")
+    csv_log   = args.logistica or find_csv("favorita") or find_csv("logistica") or find_csv("aldimi")
 
-    print(f"\n  CSV Salud     : {csv_salud or 'no encontrado'}")
-    print(f"  CSV Logística : {csv_log or 'no encontrado'}")
+    print(f"\n  Archivo Salud     : {csv_salud or 'no encontrado (.csv o .txt)'}")
+    print(f"  Archivo Logística : {csv_log or 'no encontrado (.csv o .txt)'}")
 
     if not args.skip_install:
         step_install()
