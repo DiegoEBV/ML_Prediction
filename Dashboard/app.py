@@ -59,203 +59,165 @@ st.set_page_config(
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-*, html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-}
+*, html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 
-/* ── Main background ── */
-.main .block-container {
-    padding-top: 1.5rem;
-    padding-bottom: 2rem;
-    max-width: 1400px;
-}
+/* ── Main ── */
+.main .block-container { padding-top: 1.5rem; padding-bottom: 2rem; max-width: 1400px; }
+.main { background: #ffffff !important; }
+[data-testid="stAppViewContainer"] { background: #ffffff !important; }
 
-/* ── Sidebar ── */
+/* ── Sidebar — blanco minimalista ── */
 [data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0b1930 0%, #0f2849 60%, #0d3b6e 100%);
-    border-right: 1px solid #1e3a5f;
+    background: #ffffff !important;
+    border-right: 1px solid #e2e8f0 !important;
 }
-[data-testid="stSidebar"] * { color: #c8d8f0 !important; }
-[data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 { color: #ffffff !important; font-weight: 700 !important; }
-[data-testid="stSidebar"] label { color: #a8c0e0 !important; font-size: 0.83rem !important; }
+[data-testid="stSidebar"] * { color: #374151 !important; }
+[data-testid="stSidebar"] h1,[data-testid="stSidebar"] h2,[data-testid="stSidebar"] h3 {
+    color: #111827 !important; font-weight: 700 !important;
+}
+[data-testid="stSidebar"] label { color: #6b7280 !important; font-size: 0.82rem !important; }
 [data-testid="stSidebar"] [data-baseweb="select"] > div {
-    background: #1a3460 !important; border: 1.5px solid #2d5a9e !important; border-radius: 8px !important;
+    background: #f9fafb !important; border: 1px solid #e2e8f0 !important; border-radius: 8px !important;
 }
-[data-testid="stSidebar"] .stSlider > div > div > div { background: #3b82f6 !important; }
-[data-testid="stSidebar"] .stRadio > div { gap: 0.3rem; }
+[data-testid="stSidebar"] .stRadio > div { gap: 0.25rem; }
 [data-testid="stSidebar"] .stRadio label {
-    background: #1a3460; border-radius: 8px; padding: 8px 14px;
-    border: 1px solid #2d5a9e; margin: 2px 0; width: 100%;
+    background: #f9fafb; border-radius: 8px; padding: 8px 14px;
+    border: 1px solid #e2e8f0; margin: 2px 0; width: 100%;
+    transition: all 0.15s;
 }
-[data-testid="stSidebar"] .stRadio input:checked + div label {
-    background: #2563eb !important; border-color: #3b82f6 !important;
-}
+[data-testid="stSidebar"] .stRadio label:hover { background: #eff6ff !important; border-color: #bfdbfe !important; }
 
 /* ── Metrics ── */
 [data-testid="stMetric"] {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 18px 22px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
-    transition: box-shadow 0.2s;
+    background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
-[data-testid="stMetric"]:hover { box-shadow: 0 4px 20px rgba(37,99,235,0.12); }
 [data-testid="stMetricLabel"] {
-    font-size: 0.74rem !important; color: #64748b !important;
+    font-size: 0.72rem !important; color: #6b7280 !important;
     font-weight: 600 !important; text-transform: uppercase; letter-spacing: 0.06em;
 }
 [data-testid="stMetricValue"] {
-    font-size: 1.65rem !important; font-weight: 800 !important; color: #0f172a !important;
+    font-size: 1.55rem !important; font-weight: 700 !important; color: #111827 !important;
 }
-[data-testid="stMetricDelta"] { font-size: 0.78rem !important; font-weight: 500 !important; }
+[data-testid="stMetricDelta"] { font-size: 0.75rem !important; }
 
 /* ── Buttons ── */
 .stButton > button {
-    background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
-    color: #fff !important; border: none !important; border-radius: 10px !important;
-    padding: 10px 24px !important; font-weight: 600 !important; font-size: 0.9rem !important;
-    width: 100% !important; transition: all 0.2s ease !important;
-    box-shadow: 0 2px 8px rgba(37,99,235,0.25) !important;
+    background: #2563eb !important; color: #fff !important;
+    border: none !important; border-radius: 8px !important;
+    padding: 9px 20px !important; font-weight: 600 !important;
+    font-size: 0.88rem !important; width: 100% !important;
+    transition: background 0.15s !important;
 }
-.stButton > button:hover {
-    background: linear-gradient(135deg, #1e40af, #1d4ed8) !important;
-    box-shadow: 0 4px 16px rgba(37,99,235,0.4) !important;
-    transform: translateY(-1px) !important;
-}
-.stButton > button:active { transform: translateY(0) !important; }
+.stButton > button:hover { background: #1d4ed8 !important; }
 
 /* ── Tabs ── */
 .stTabs [data-baseweb="tab-list"] {
-    background: #f1f5f9; border-radius: 12px; padding: 4px; gap: 2px;
-    border: 1px solid #e2e8f0;
+    background: #f3f4f6; border-radius: 10px; padding: 3px; gap: 2px;
+    border: 1px solid #e5e7eb;
 }
 .stTabs [data-baseweb="tab"] {
-    background: transparent !important; border-radius: 9px !important;
-    padding: 9px 20px !important; font-weight: 600 !important;
-    color: #475569 !important; font-size: 0.85rem !important; border: none !important;
+    background: transparent !important; border-radius: 7px !important;
+    padding: 8px 18px !important; font-weight: 500 !important;
+    color: #6b7280 !important; font-size: 0.84rem !important; border: none !important;
 }
 .stTabs [aria-selected="true"] {
-    background: #2563eb !important; color: #fff !important;
-    box-shadow: 0 2px 8px rgba(37,99,235,0.35) !important;
+    background: #ffffff !important; color: #111827 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important; font-weight: 600 !important;
 }
 
 /* ── Cards ── */
 .card {
-    background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;
-    padding: 24px 28px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-    margin-bottom: 16px;
+    background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 20px 24px; margin-bottom: 14px;
 }
 
-/* ── Page headers ── */
-.header-gradient {
-    background: linear-gradient(135deg, #0b1930 0%, #1d4ed8 70%, #0891b2 100%);
-    border-radius: 18px; padding: 32px 40px; margin-bottom: 28px;
-    box-shadow: 0 4px 24px rgba(29,78,216,0.2);
+/* ── Page headers — minimalistas ── */
+.page-header {
+    padding: 20px 0 16px; margin-bottom: 20px;
+    border-bottom: 1px solid #e5e7eb;
 }
-.header-gradient h1 {
-    color: #fff; font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 2rem; margin: 0; font-weight: 800; letter-spacing: -0.02em;
-}
-.header-gradient p { color: #bfdbfe; margin: 6px 0 0; font-size: 0.92rem; }
-
-.header-green {
-    background: linear-gradient(135deg, #0b1930 0%, #059669 70%, #0d9488 100%);
-    border-radius: 18px; padding: 28px 36px; margin-bottom: 24px;
-}
-.header-green h1 { color: #fff; font-size: 1.8rem; margin: 0; font-weight: 800; }
-.header-green p  { color: #a7f3d0; margin: 5px 0 0; font-size: 0.88rem; }
-
-.header-purple {
-    background: linear-gradient(135deg, #0b1930 0%, #7c3aed 70%, #db2777 100%);
-    border-radius: 18px; padding: 28px 36px; margin-bottom: 24px;
-}
-.header-purple h1 { color: #fff; font-size: 1.8rem; margin: 0; font-weight: 800; }
-.header-purple p  { color: #e9d5ff; margin: 5px 0 0; font-size: 0.88rem; }
-
-/* ── Risk result cards ── */
-.risk-card {
-    border-radius: 18px; padding: 32px; text-align: center; margin: 12px 0;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.10);
-}
-.risk-alto   { background: linear-gradient(135deg,#fef2f2,#fee2e2); border: 2px solid #ef4444; }
-.risk-medio  { background: linear-gradient(135deg,#fffbeb,#fef3c7); border: 2px solid #f59e0b; }
-.risk-bajo   { background: linear-gradient(135deg,#f0fdf4,#dcfce7); border: 2px solid #22c55e; }
-.risk-card .risk-label {
-    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2.4rem;
-    font-weight: 800; margin: 0;
-}
-.risk-alto  .risk-label { color: #b91c1c; }
-.risk-medio .risk-label { color: #92400e; }
-.risk-bajo  .risk-label { color: #14532d; }
-.risk-card .risk-sub { font-size: 0.95rem; color: #374151; margin-top: 8px; }
-
-/* ── Alert boxes ── */
-.alert {
-    border-radius: 10px; padding: 13px 16px; margin: 8px 0;
-    font-size: 0.87rem; font-weight: 500; line-height: 1.5;
-}
-.alert-red    { background:#fef2f2; border-left:4px solid #ef4444; color:#7f1d1d; }
-.alert-yellow { background:#fffbeb; border-left:4px solid #f59e0b; color:#78350f; }
-.alert-green  { background:#f0fdf4; border-left:4px solid #22c55e; color:#14532d; }
-.alert-blue   { background:#eff6ff; border-left:4px solid #3b82f6; color:#1e3a5f; }
-.alert-teal   { background:#f0fdfa; border-left:4px solid #0d9488; color:#134e4a; }
+.page-header h1 { font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0; }
+.page-header p  { font-size: 0.85rem; color: #6b7280; margin: 4px 0 0; }
+.page-header .accent { color: #2563eb; }
 
 /* ── Landing cards ── */
 .role-card {
-    border-radius: 20px; padding: 40px 32px; text-align: center;
-    transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;
-    margin-bottom: 16px;
+    border-radius: 14px; padding: 32px 28px; text-align: center;
+    transition: box-shadow 0.2s, transform 0.2s; cursor: pointer;
+    margin-bottom: 14px; background: #ffffff;
 }
-.role-card-dev {
-    background: linear-gradient(160deg, #f0fdf4 0%, #ecfdf5 100%);
-    border: 2px solid #6ee7b7;
-    box-shadow: 0 4px 20px rgba(16,185,129,0.12);
-}
-.role-card-worker {
-    background: linear-gradient(160deg, #f5f3ff 0%, #ede9fe 100%);
-    border: 2px solid #c4b5fd;
-    box-shadow: 0 4px 20px rgba(124,58,237,0.12);
-}
-.role-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
-.role-card .role-icon { font-size: 3.5rem; margin-bottom: 12px; }
-.role-card h2 { font-size: 1.6rem; font-weight: 800; color: #0f172a; margin: 0 0 10px; }
-.role-card p  { font-size: 0.88rem; color: #475569; margin: 0; line-height: 1.6; }
-.badge { display:inline-block; padding:5px 16px; border-radius:20px; font-size:0.78rem; font-weight:700; margin-top:14px; }
-.badge-dev    { background:#d1fae5; color:#065f46; }
+.role-card-dev    { border: 1.5px solid #bfdbfe; }
+.role-card-worker { border: 1.5px solid #ddd6fe; }
+.role-card:hover  { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.09); }
+.role-card .role-icon { font-size: 2.8rem; margin-bottom: 10px; }
+.role-card h2     { font-size: 1.3rem; font-weight: 700; color: #111827; margin: 0 0 8px; }
+.role-card p      { font-size: 0.85rem; color: #6b7280; margin: 0; line-height: 1.6; }
+.badge { display:inline-block; padding:4px 14px; border-radius:20px; font-size:0.75rem; font-weight:600; margin-top:12px; }
+.badge-dev    { background:#dbeafe; color:#1e40af; }
 .badge-worker { background:#ede9fe; color:#5b21b6; }
+
+/* ── Risk cards ── */
+.risk-card {
+    border-radius: 14px; padding: 28px; text-align: center; margin: 12px 0;
+    background: #ffffff;
+}
+.risk-alto   { border: 2px solid #ef4444; background: #fef2f2; }
+.risk-medio  { border: 2px solid #f59e0b; background: #fffbeb; }
+.risk-bajo   { border: 2px solid #22c55e; background: #f0fdf4; }
+.risk-card .risk-label { font-size: 2rem; font-weight: 800; margin: 0; }
+.risk-alto  .risk-label { color: #b91c1c; }
+.risk-medio .risk-label { color: #92400e; }
+.risk-bajo  .risk-label { color: #14532d; }
+.risk-card .risk-sub { font-size: 0.9rem; color: #374151; margin-top: 8px; }
+
+/* ── Alert boxes ── */
+.alert {
+    border-radius: 8px; padding: 12px 16px; margin: 8px 0;
+    font-size: 0.85rem; font-weight: 500; line-height: 1.5;
+}
+.alert-red    { background:#fef2f2; border-left:3px solid #ef4444; color:#7f1d1d; }
+.alert-yellow { background:#fffbeb; border-left:3px solid #f59e0b; color:#78350f; }
+.alert-green  { background:#f0fdf4; border-left:3px solid #22c55e; color:#14532d; }
+.alert-blue   { background:#eff6ff; border-left:3px solid #3b82f6; color:#1e3a5f; }
+.alert-teal   { background:#f0fdfa; border-left:3px solid #0d9488; color:#134e4a; }
+.alert-gray   { background:#f9fafb; border-left:3px solid #9ca3af; color:#374151; }
 
 /* ── Nutrition card ── */
 .nutr-card {
-    background: #ffffff; border-radius: 14px; padding: 20px 24px;
-    border: 1.5px solid #e2e8f0; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    background: #ffffff; border-radius: 12px; padding: 18px 22px;
+    border: 1px solid #e5e7eb;
 }
-.nutr-card.alto  { border-color: #fca5a5; background: linear-gradient(135deg,#fff,#fef2f2); }
-.nutr-card.medio { border-color: #fcd34d; background: linear-gradient(135deg,#fff,#fffbeb); }
-.nutr-card.bajo  { border-color: #86efac; background: linear-gradient(135deg,#fff,#f0fdf4); }
+.nutr-card.alto  { border-color: #fca5a5; background: #fef2f2; }
+.nutr-card.medio { border-color: #fcd34d; background: #fffbeb; }
+.nutr-card.bajo  { border-color: #86efac; background: #f0fdf4; }
 
-/* ── GCP card ── */
-.gcp-panel {
-    background: linear-gradient(135deg,#f0fdf4,#f0fdfa); border-radius:14px;
-    padding:20px 24px; border:1.5px solid #6ee7b7; margin:12px 0;
+/* ── Medallion badges ── */
+.medal-card {
+    text-align:center; padding:18px; background:#ffffff;
+    border-radius:12px; border:1px solid #e5e7eb;
 }
+.medal-card .medal-icon { font-size:1.8rem; }
+.medal-card .medal-name { font-weight:700; color:#111827; font-size:0.95rem; margin-top:4px; }
+.medal-card .medal-sub  { font-size:0.78rem; color:#6b7280; margin-top:3px; }
+.medal-card .medal-tbl  { font-size:0.75rem; color:#9ca3af; margin-top:2px; font-family:monospace; }
 
-/* ── Divider ── */
-.section-title {
-    font-size: 1rem; font-weight: 700; color: #1e40af;
-    margin: 24px 0 14px; padding-bottom: 8px;
-    border-bottom: 2px solid #dbeafe;
+/* ── Status pill ── */
+.status-pill {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 14px; border-radius:20px; font-size:0.8rem; font-weight:600;
+    margin:3px 0;
 }
+.status-ok  { background:#f0fdf4; color:#15803d; border:1px solid #86efac; }
+.status-err { background:#fef2f2; color:#b91c1c; border:1px solid #fca5a5; }
+.status-off { background:#f9fafb; color:#6b7280; border:1px solid #e5e7eb; }
 
-hr { border-color: #f1f5f9 !important; margin: 18px 0; }
-
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+hr { border-color: #e5e7eb !important; margin: 16px 0; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #f9fafb; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -777,45 +739,47 @@ def chart_nutrition_basket(nivel, n_pacientes, n_dias):
 # GCP CREDENTIALS PANEL
 # ══════════════════════════════════════════════════════════════
 def _render_gcp_panel():
-    sa_path = os.path.join(os.path.dirname(__file__), "gcp","secrets","gcp_service_account.json")
     env_var = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS","")
+    sa_path = os.path.join(os.path.dirname(__file__), "gcp","secrets","gcp_service_account.json")
 
-    with st.expander("⚙️ Configuración de Credenciales GCP", expanded=not HAS_GCP):
-        env_ok = bool(env_var and os.path.exists(env_var))
-        sa_ok  = os.path.exists(sa_path)
+    # Check st.secrets
+    secrets_ok = False
+    try:
+        import streamlit as _st
+        secrets_ok = "gcp_adc" in _st.secrets
+    except Exception:
+        pass
 
-        def _pill(ok, text):
-            bg = "#dcfce7" if ok else "#f1f5f9"
-            col = "#15803d" if ok else "#64748b"
-            icon = "✓" if ok else "○"
-            st.markdown(
-                f'<div style="background:{bg};color:{col};border-radius:8px;padding:10px 14px;margin:4px 0;">'
-                f'<b>{icon} {text}</b></div>', unsafe_allow_html=True
-            )
+    env_ok = bool(env_var and os.path.exists(env_var))
+    sa_ok  = os.path.exists(sa_path)
 
-        _pill(env_ok, f"GOOGLE_APPLICATION_CREDENTIALS {'→ ' + env_var[:40] if env_ok else '(no configurada)'}")
-        _pill(sa_ok,  f"Archivo local: gcp/secrets/gcp_service_account.json {'(encontrado)' if sa_ok else '(no encontrado)'}")
-        _pill(False,  "ADC: gcloud auth application-default login")
+    def _pill(status, text):
+        cls = {"ok":"status-ok","err":"status-err","off":"status-off"}.get(status,"status-off")
+        icon = {"ok":"✓","err":"✗","off":"○"}.get(status,"○")
+        st.markdown(f'<span class="status-pill {cls}">{icon} {text}</span>', unsafe_allow_html=True)
 
-        st.markdown("---")
-        st.markdown("**Subir Service Account JSON directamente:**")
-        uploaded_sa = st.file_uploader("Archivo JSON de service account", type=["json"], key="sa_uploader")
-        if uploaded_sa:
-            try:
-                sa_content = json.load(uploaded_sa)
-                if {"type","private_key","client_email"}.issubset(sa_content.keys()):
-                    os.makedirs(os.path.dirname(sa_path), exist_ok=True)
-                    with open(sa_path,"w") as f: json.dump(sa_content, f, indent=2)
-                    if HAS_GCP:
-                        import gcp.connector as _conn; _conn._BQ_CLIENT = None
-                    st.success("Service account guardada. Recarga la página.")
-                else:
-                    st.error("El archivo no parece un service account JSON válido.")
-            except Exception as e:
-                st.error(f"Error: {e}")
+    st.markdown("#### Estado de autenticación GCP")
+    _pill("ok" if secrets_ok else "off",
+          "st.secrets[gcp_adc] — OAuth2 refresh token" + (" (configurado)" if secrets_ok else " (agregar en Streamlit Cloud → Settings → Secrets)"))
+    _pill("ok" if env_ok else "off",
+          f"GOOGLE_APPLICATION_CREDENTIALS" + (f": {env_var[:50]}" if env_ok else " (no configurada)"))
+    _pill("ok" if sa_ok else "off",
+          f"gcp/secrets/gcp_service_account.json" + (" (encontrado)" if sa_ok else " (no encontrado — bloqueado por política org)"))
 
-        if not HAS_GCP:
-            st.code("pip install google-cloud-bigquery google-cloud-bigquery-storage pyarrow db-dtypes")
+    if not secrets_ok and not env_ok and not sa_ok:
+        st.markdown("""
+        <div class="alert alert-yellow" style="margin-top:10px;">
+        <b>Sin credenciales activas.</b> Para conectar a BigQuery desde Streamlit Cloud,
+        ve a <b>Settings → Secrets</b> y agrega el bloque <code>[gcp_adc]</code>
+        con <code>type</code>, <code>client_id</code>, <code>client_secret</code> y <code>refresh_token</code>.
+        </div>
+        """, unsafe_allow_html=True)
+    elif secrets_ok:
+        st.markdown('<div class="alert alert-green" style="margin-top:10px;">Credenciales via st.secrets detectadas. Usa "Verificar GCP" para probar la conexion.</div>',
+                    unsafe_allow_html=True)
+
+    if not HAS_GCP:
+        st.markdown('<div class="alert alert-gray" style="margin-top:8px;">google-cloud-bigquery no instalado.</div>', unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -830,12 +794,11 @@ def page_landing():
         st.caption("ML 1ACC0057 · UPC · GCP: mlaldimi")
 
     st.markdown("""
-    <div class="header-gradient" style="text-align:center;padding:50px 40px;">
-        <h1 style="font-size:2.8rem;letter-spacing:-0.03em;">🏥 ALDIMI-PREDICT</h1>
-        <p style="font-size:1.1rem;margin-top:10px;">Plataforma integral de predicción con Machine Learning</p>
-        <p style="color:#93c5fd;font-size:0.88rem;margin-top:6px;">
-            ML 1ACC0057 · UPC · Proyecto GCP: 413462127752 | mlaldimi
-        </p>
+    <div style="text-align:center;padding:40px 20px 32px;">
+        <div style="font-size:3rem;margin-bottom:8px;">🏥</div>
+        <h1 style="font-size:2rem;font-weight:800;color:#111827;margin:0;letter-spacing:-0.02em;">ALDIMI-PREDICT</h1>
+        <p style="font-size:0.95rem;color:#6b7280;margin:8px 0 4px;">Plataforma integral de predicción con Machine Learning</p>
+        <p style="font-size:0.78rem;color:#9ca3af;">ML 1ACC0057 · UPC · GCP: mlaldimi (413462127752)</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -875,18 +838,19 @@ def page_landing():
             st.session_state.vista = "trabajador"; st.rerun()
 
     st.markdown("---")
-    st.markdown("#### Arquitectura de Datos — Medallion GCP mlaldimi")
+    st.markdown('<p style="font-size:0.82rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;">ARQUITECTURA MEDALLION — BigQuery mlaldimi</p>', unsafe_allow_html=True)
     ca, cb, cc = st.columns(3)
-    for col, icon, name, desc, bg, border in [
-        (ca,"🥉","Bronze","Datos crudos ingestados","#fef3c7","#f59e0b"),
-        (cb,"🥈","Silver","Limpieza y validación","#f1f5f9","#94a3b8"),
-        (cc,"🥇","Gold","Features ML — fuente de entrenamiento","#fefce8","#eab308"),
+    for col, icon, name, tbl, desc in [
+        (ca,"🥉","Bronze","bronze_salud / bronze_logistica","Datos crudos — CSV/TXT subidos desde el dashboard"),
+        (cb,"🥈","Silver","silver_salud / silver_logistica","Datos limpios — salida de los notebooks de limpieza"),
+        (cc,"🥇","Gold",  "gold_salud / gold_logistica",   "Features ML — fuente de los modelos entrenados"),
     ]:
         col.markdown(
-            f'<div style="text-align:center;padding:20px;background:{bg};border-radius:14px;border:2px solid {border};">'
-            f'<div style="font-size:2.2rem;">{icon}</div>'
-            f'<div style="font-weight:800;color:#0f172a;font-size:1.05rem;">{name}</div>'
-            f'<div style="font-size:0.82rem;color:#475569;margin-top:4px;">{desc}</div>'
+            f'<div class="medal-card">'
+            f'<div class="medal-icon">{icon}</div>'
+            f'<div class="medal-name">{name}</div>'
+            f'<div class="medal-tbl">{tbl}</div>'
+            f'<div class="medal-sub" style="margin-top:6px;">{desc}</div>'
             f'</div>', unsafe_allow_html=True
         )
 
@@ -927,10 +891,11 @@ def _dev_sidebar():
 def page_developer():
     _dev_sidebar()
     modulo_label = "Logística" if st.session_state.modulo_dev == "logistica" else "Salud"
+    icon_mod = "📦" if st.session_state.modulo_dev == "logistica" else "🏥"
     st.markdown(f"""
-    <div class="header-green">
-        <h1>🛠️ Vista Developer — {modulo_label}</h1>
-        <p>KPIs · Comparación interactiva · Exportar archivos · Sincronización GCP</p>
+    <div class="page-header">
+        <h1>{icon_mod} Vista Developer — <span class="accent">{modulo_label}</span></h1>
+        <p>KPIs · Comparación interactiva de modelos · Exportar archivos · Sincronización BigQuery</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1051,23 +1016,42 @@ def _dev_logistica():
     with t_gcp:
         _render_gcp_panel()
         st.markdown("---")
+
+        st.markdown("""
+        <div class="alert alert-blue">
+        <b>BigQuery usa TABLAS, no buckets.</b> Los datos van a tablas dentro del dataset <code>mlaldimi</code>
+        en el proyecto <code>413462127752</code>. No se usa Cloud Storage en esta arquitectura.
+        </div>
+        """, unsafe_allow_html=True)
+
         ca2, cb2, cc2 = st.columns(3)
-        for col, icon, name, tbl, bg, border, fg in [
-            (ca2,"🥉","Bronze","bronze_logistica","#fef3c7","#f59e0b","#92400e"),
-            (cb2,"🥈","Silver","silver_logistica","#f1f5f9","#94a3b8","#334155"),
-            (cc2,"🥇","Gold",  "gold_logistica",  "#fefce8","#eab308","#713f12"),
+        for col, icon, name, tbl, desc in [
+            (ca2,"🥉","Bronze","bronze_logistica","CSV/TXT crudo — sube el archivo favorita aquí"),
+            (cb2,"🥈","Silver","silver_logistica","Datos limpios — salida del notebook Logistica_Limpieza.ipynb"),
+            (cc2,"🥇","Gold",  "gold_logistica",  "Features finales — datos que alimentan los modelos PKL"),
         ]:
             col.markdown(
-                f'<div style="text-align:center;padding:18px;background:{bg};border-radius:12px;border:2px solid {border};">'
-                f'<div style="font-size:1.8rem;">{icon}</div>'
-                f'<div style="font-weight:800;color:{fg};font-size:0.95rem;">{name}</div>'
-                f'<div style="font-size:0.78rem;color:#475569;margin-top:4px;"><code>{tbl}</code></div>'
+                f'<div class="medal-card">'
+                f'<div class="medal-icon">{icon}</div>'
+                f'<div class="medal-name">{name}</div>'
+                f'<div class="medal-tbl">{tbl}</div>'
+                f'<div class="medal-sub" style="margin-top:6px;font-size:0.75rem;">{desc}</div>'
                 f'</div>', unsafe_allow_html=True
             )
 
         st.markdown("---")
+        st.markdown("""
+        <div class="alert alert-gray">
+        <b>Flujo de datos:</b><br>
+        1. Sube el TXT/CSV crudo → <b>Bronze</b><br>
+        2. Ejecuta <code>setup_local.py</code> o los notebooks → produce datos limpios → sube a <b>Silver</b><br>
+        3. El pipeline de features genera la tabla <b>Gold</b> (fuente de entrenamiento)<br>
+        4. Los modelos <b>.pkl</b> en <code>Dashboard/models/</code> se cargan al inicio y NO se vuelven a entrenar
+        </div>
+        """, unsafe_allow_html=True)
+
         st.markdown("#### Cargar datos a BigQuery")
-        uploaded = st.file_uploader("CSV de logística (ventas diarias)", type=["csv","txt"], key="gcp_log_file")
+        uploaded = st.file_uploader("CSV/TXT de logística (ventas diarias)", type=["csv","txt"], key="gcp_log_file")
         if uploaded:
             df_up = pd.read_csv(uploaded)
             st.dataframe(df_up.head(5), use_container_width=True)
@@ -1077,7 +1061,7 @@ def _dev_logistica():
                     if HAS_GCP:
                         ok, msg = upload_bronze_logistica(df_up, source="dashboard")
                         (st.success if ok else st.error)(msg)
-                    else: st.warning("GCP no disponible")
+                    else: st.warning("GCP no disponible — configura st.secrets[gcp_adc]")
             with sc:
                 if st.button("→ Silver", key="silver_log", use_container_width=True):
                     if HAS_GCP:
@@ -1253,7 +1237,37 @@ def _dev_salud():
     with t_gcp:
         _render_gcp_panel()
         st.markdown("---")
-        uploaded = st.file_uploader("CSV de salud (pacientes oncológicos)", type=["csv","txt"], key="gcp_salud_file")
+
+        st.markdown("""
+        <div class="alert alert-blue">
+        <b>BigQuery usa TABLAS, no buckets.</b> Dataset: <code>mlaldimi</code> · Proyecto: <code>413462127752</code>
+        </div>
+        """, unsafe_allow_html=True)
+
+        ca3, cb3, cc3 = st.columns(3)
+        for col, icon, name, tbl, desc in [
+            (ca3,"🥉","Bronze","bronze_salud","CSV/TXT crudo — sube el archivo de pacientes aquí"),
+            (cb3,"🥈","Silver","silver_salud","Datos limpios — salida del notebook Salud_Limpieza.ipynb"),
+            (cc3,"🥇","Gold",  "gold_salud",  "Features finales — datos que alimentan los modelos PKL"),
+        ]:
+            col.markdown(
+                f'<div class="medal-card">'
+                f'<div class="medal-icon">{icon}</div>'
+                f'<div class="medal-name">{name}</div>'
+                f'<div class="medal-tbl">{tbl}</div>'
+                f'<div class="medal-sub" style="margin-top:6px;font-size:0.75rem;">{desc}</div>'
+                f'</div>', unsafe_allow_html=True
+            )
+
+        st.markdown("---")
+        st.markdown("""
+        <div class="alert alert-gray">
+        <b>Flujo:</b> TXT crudo → Bronze → Notebook limpieza → Silver → Features → Gold → .pkl entrenados
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("#### Cargar datos a BigQuery")
+        uploaded = st.file_uploader("CSV/TXT de salud (pacientes oncológicos)", type=["csv","txt"], key="gcp_salud_file")
         if uploaded:
             df_up = pd.read_csv(uploaded)
             st.dataframe(df_up.head(5), use_container_width=True)
@@ -1263,7 +1277,7 @@ def _dev_salud():
                     if HAS_GCP:
                         ok, msg = upload_bronze_salud(df_up, source="dashboard")
                         (st.success if ok else st.error)(msg)
-                    else: st.warning("GCP no disponible")
+                    else: st.warning("GCP no disponible — configura st.secrets[gcp_adc]")
             with sc2:
                 if st.button("→ Silver", key="silver_sal", use_container_width=True):
                     if HAS_GCP:
@@ -1340,9 +1354,9 @@ def page_trabajador():
         st.caption("+ Plan nutricional")
 
     st.markdown("""
-    <div class="header-purple">
+    <div class="page-header">
         <h1>👩‍⚕️ Vista Trabajador</h1>
-        <p>Clasificación oncológica · Plan nutricional · Historial de pacientes</p>
+        <p>Clasificación oncológica · Plan nutricional personalizado · Historial de pacientes</p>
     </div>
     """, unsafe_allow_html=True)
 
