@@ -74,12 +74,12 @@ st.markdown("""
     max-width: 1440px !important;
 }
 
-/* ══ SIDEBAR — azul oscuro estilo referencia ══ */
+/* ══ SIDEBAR — azul oscuro gradiente médico SaaS ══ */
 [data-testid="stSidebar"] {
-    background: linear-gradient(160deg, #1e3a8a 0%, #1e40af 60%, #2563eb 100%) !important;
+    background: linear-gradient(180deg, #1e3a8a 0%, #1d4ed8 100%) !important;
     border-right: none !important;
 }
-[data-testid="stSidebar"] > div { padding-top: 1.2rem !important; }
+[data-testid="stSidebar"] > div { padding-top: 0 !important; }
 
 /* Texto sidebar */
 [data-testid="stSidebar"] * { color: #bfdbfe !important; }
@@ -93,11 +93,11 @@ st.markdown("""
 /* Separador sidebar */
 [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.15) !important; margin: 10px 0 !important; }
 
-/* Radio buttons sidebar */
+/* Radio buttons sidebar — nav items estilo SaaS */
 [data-testid="stSidebar"] .stRadio > div { gap: 4px !important; }
 [data-testid="stSidebar"] .stRadio label {
-    background: rgba(255,255,255,0.08) !important;
-    border: 1px solid rgba(255,255,255,0.15) !important;
+    background: rgba(255,255,255,0.07) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
     border-radius: 10px !important;
     padding: 9px 14px !important;
     color: #bfdbfe !important;
@@ -105,8 +105,8 @@ st.markdown("""
     transition: all 0.15s !important;
 }
 [data-testid="stSidebar"] .stRadio label:hover {
-    background: rgba(255,255,255,0.15) !important;
-    border-color: rgba(255,255,255,0.3) !important;
+    background: rgba(255,255,255,0.14) !important;
+    border-color: rgba(255,255,255,0.28) !important;
 }
 [data-testid="stSidebar"] .stRadio [data-baseweb="radio"] input:checked ~ div {
     background: rgba(255,255,255,0.22) !important;
@@ -135,7 +135,8 @@ st.markdown("""
     border: none !important;
     border-radius: 14px !important;
     padding: 18px 22px !important;
-    box-shadow: 0 1px 3px rgba(30,58,138,0.06), 0 4px 16px rgba(30,58,138,0.06) !important;
+    box-shadow: 0 2px 8px rgba(30,58,138,0.08) !important;
+    border-left: 4px solid #2563eb !important;
 }
 [data-testid="stMetricLabel"] {
     font-size: 0.71rem !important; color: #6b7280 !important;
@@ -166,7 +167,7 @@ st.markdown("""
 }
 .stButton > button:active { transform: translateY(0) !important; }
 
-/* ══ TABS ══ */
+/* ══ TABS — fondo blanco, activo azul ══ */
 .stTabs [data-baseweb="tab-list"] {
     background: #ffffff !important;
     border-radius: 12px !important;
@@ -196,22 +197,34 @@ st.markdown("""
     background: #ffffff;
     border-radius: 16px;
     padding: 22px 26px;
-    box-shadow: 0 1px 3px rgba(30,58,138,0.06), 0 4px 16px rgba(30,58,138,0.05);
+    box-shadow: 0 2px 8px rgba(30,58,138,0.08);
     margin-bottom: 16px;
     border: none;
 }
 
-/* ══ PAGE HEADER ══ */
-.page-header {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 22px 28px;
-    margin-bottom: 22px;
-    box-shadow: 0 1px 3px rgba(30,58,138,0.06);
-    border-left: 4px solid #2563eb;
+/* ══ PAGE TITLE — inline, sin fondo de bloque ══ */
+.page-title {
+    margin-bottom: 20px;
 }
-.page-header h1 { font-size: 1.45rem; font-weight: 800; color: #111827; margin: 0; letter-spacing: -0.02em; }
-.page-header p  { font-size: 0.83rem; color: #6b7280; margin: 5px 0 0; }
+.page-title h1 {
+    font-size: 1.6rem; font-weight: 800; color: #111827;
+    margin: 0 0 4px; letter-spacing: -0.02em;
+}
+.page-title p {
+    font-size: 0.84rem; color: #6b7280; margin: 0;
+}
+.page-title .accent { color: #2563eb; }
+
+/* ══ PAGE HEADER (legacy — kept for backward compat) ══ */
+.page-header {
+    margin-bottom: 20px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+.page-header h1 { font-size: 1.55rem; font-weight: 800; color: #111827; margin: 0 0 4px; letter-spacing: -0.02em; }
+.page-header p  { font-size: 0.84rem; color: #6b7280; margin: 0; }
 .page-header .accent { color: #2563eb; }
 
 /* ══ LANDING CARDS ══ */
@@ -219,7 +232,7 @@ st.markdown("""
     border-radius: 16px; padding: 34px 28px; text-align: center;
     background: #ffffff;
     transition: box-shadow 0.2s, transform 0.2s; cursor: pointer; margin-bottom: 14px;
-    box-shadow: 0 1px 3px rgba(30,58,138,0.06), 0 4px 16px rgba(30,58,138,0.05);
+    box-shadow: 0 2px 8px rgba(30,58,138,0.08);
 }
 .role-card-dev    { border-top: 4px solid #2563eb; }
 .role-card-worker { border-top: 4px solid #7c3aed; }
@@ -235,7 +248,7 @@ st.markdown("""
 .risk-card {
     border-radius: 14px; padding: 26px; text-align: center; margin: 10px 0;
     background: #ffffff;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 8px rgba(30,58,138,0.08);
 }
 .risk-alto   { border-top: 4px solid #ef4444; background: #fef2f2; }
 .risk-medio  { border-top: 4px solid #f59e0b; background: #fffbeb; }
@@ -261,7 +274,7 @@ st.markdown("""
 /* ══ NUTRITION CARD ══ */
 .nutr-card {
     background: #ffffff; border-radius: 14px; padding: 18px 22px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #f1f5f9;
+    box-shadow: 0 2px 8px rgba(30,58,138,0.08); border: 1px solid #f1f5f9;
 }
 .nutr-card.alto  { border-top: 3px solid #ef4444; }
 .nutr-card.medio { border-top: 3px solid #f59e0b; }
@@ -271,7 +284,7 @@ st.markdown("""
 .medal-card {
     text-align:center; padding:18px; background:#ffffff;
     border-radius:14px;
-    box-shadow: 0 1px 4px rgba(30,58,138,0.06);
+    box-shadow: 0 2px 8px rgba(30,58,138,0.08);
     border: 1px solid #e5e7eb;
 }
 .medal-card .medal-icon { font-size:1.8rem; }
@@ -897,8 +910,12 @@ def _render_gcp_panel():
 # ══════════════════════════════════════════════════════════════
 def page_landing():
     with st.sidebar:
-        st.markdown("### ALDIMI-PREDICT")
-        st.markdown("---")
+        st.markdown("""
+        <div style="padding:16px 4px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom:16px;">
+          <div style="font-size:1.3rem; font-weight:800; color:#fff; letter-spacing:-0.02em;">🏥 ALDIMI</div>
+          <div style="font-size:0.72rem; color:#93c5fd; margin-top:2px;">ML PREDICT · mlaldimi</div>
+        </div>
+        """, unsafe_allow_html=True)
         st.markdown("Selecciona tu **perfil** en la pantalla principal.")
         st.markdown("---")
         st.caption("ML 1ACC0057 · UPC · GCP: mlaldimi")
@@ -970,20 +987,22 @@ def page_landing():
 # ══════════════════════════════════════════════════════════════
 def _dev_sidebar():
     with st.sidebar:
-        st.markdown("### 🏥 ALDIMI")
-        st.markdown("---")
+        st.markdown("""
+        <div style="padding:16px 4px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom:16px;">
+          <div style="font-size:1.3rem; font-weight:800; color:#fff; letter-spacing:-0.02em;">🏥 ALDIMI</div>
+          <div style="font-size:0.72rem; color:#93c5fd; margin-top:2px;">ML PREDICT · mlaldimi</div>
+        </div>
+        """, unsafe_allow_html=True)
         if st.button("← Inicio", key="back_dev", use_container_width=True):
             st.session_state.vista = "landing"; st.rerun()
-        st.markdown("---")
-        st.markdown("**Módulo**")
+        st.markdown('<div style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:rgba(147,197,253,0.6); padding: 12px 4px 6px;">MÓDULO</div>', unsafe_allow_html=True)
         modulo = st.radio(
             "", ["📦 Logística","🏥 Salud"],
             index=0 if st.session_state.modulo_dev == "logistica" else 1,
             label_visibility="collapsed",
         )
         st.session_state.modulo_dev = "logistica" if "ogística" in modulo else "salud"
-        st.markdown("---")
-        st.markdown("**GCP**")
+        st.markdown('<div style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:rgba(147,197,253,0.6); padding: 12px 4px 6px;">CONEXIÓN GCP</div>', unsafe_allow_html=True)
         st.caption("413462127752 · mlaldimi")
         if HAS_GCP:
             if st.button("Verificar GCP", key="check_gcp", use_container_width=True):
@@ -1484,11 +1503,15 @@ def _dev_salud():
 def page_trabajador():
     # Minimal sidebar — navigation only
     with st.sidebar:
-        st.markdown("### 🏥 ALDIMI")
-        st.markdown("---")
+        st.markdown("""
+        <div style="padding:16px 4px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom:16px;">
+          <div style="font-size:1.3rem; font-weight:800; color:#fff; letter-spacing:-0.02em;">🏥 ALDIMI</div>
+          <div style="font-size:0.72rem; color:#93c5fd; margin-top:2px;">ML PREDICT · mlaldimi</div>
+        </div>
+        """, unsafe_allow_html=True)
         if st.button("← Inicio", key="back_worker", use_container_width=True):
             st.session_state.vista = "landing"; st.rerun()
-        st.markdown("---")
+        st.markdown('<div style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:rgba(147,197,253,0.6); padding: 12px 4px 6px;">MÓDULO</div>', unsafe_allow_html=True)
         st.caption("Vista Trabajador")
         st.caption("Clasificación oncológica")
         st.caption("+ Plan nutricional")
