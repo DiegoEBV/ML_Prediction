@@ -1,6 +1,6 @@
 {
-  "generado": "2026-06-17T16:48:48.118771",
-  "fuente": "synthetic_demo",
+  "generado": "2026-06-17T18:45:39.085307",
+  "fuente": "local",
   "gcp_project": "413462127752",
   "gcp_dataset": "mlaldimi",
   "tabla_gold": "mlaldimi.mlaldimi.gold_logistica",
@@ -27,10 +27,10 @@
     "city_enc",
     "cluster"
   ],
-  "n_train": 40000,
-  "n_test": 10000,
-  "mejor_reg_d7": "XGBoost",
-  "mejor_reg_d14": "XGBoost",
+  "n_train": 2116999,
+  "n_test": 529250,
+  "mejor_reg_d7": "RandomForest",
+  "mejor_reg_d14": "RandomForest",
   "mejor_cls": "XGBoost",
   "hiperparametros": {
     "xgb_d7": {
@@ -39,7 +39,7 @@
       "max_depth": 4,
       "min_child_weight": 3,
       "n_estimators": 200,
-      "reg_alpha": 0.0,
+      "reg_alpha": 0.1,
       "reg_lambda": 1.0,
       "subsample": 0.8
     },
@@ -55,9 +55,9 @@
     },
     "rf_d7": {
       "max_depth": 8,
-      "max_features": "sqrt",
-      "min_samples_leaf": 3,
-      "n_estimators": 100
+      "max_features": 0.5,
+      "min_samples_leaf": 5,
+      "n_estimators": 200
     }
   },
   "kpi_targets": {
@@ -72,57 +72,57 @@
     "demand7": [
       {
         "Modelo": "XGBoost d7",
-        "WAPE%": 0.0,
-        "R2": 1.0,
-        "MAE": 0.0,
-        "RMSE": 0.0
+        "WAPE%": 18.06,
+        "R2": 0.9137,
+        "MAE": 11.009,
+        "RMSE": 15.972
       },
       {
         "Modelo": "Random Forest d7",
-        "WAPE%": 0.0,
-        "R2": 1.0,
-        "MAE": 0.0,
-        "RMSE": 0.0
+        "WAPE%": 17.13,
+        "R2": 0.9206,
+        "MAE": 10.442,
+        "RMSE": 15.323
       },
       {
         "Modelo": "LightGBM d7",
-        "WAPE%": 0.0,
-        "R2": 1.0,
-        "MAE": 0.0,
-        "RMSE": 0.0
+        "WAPE%": 18.3,
+        "R2": 0.9107,
+        "MAE": 11.153,
+        "RMSE": 16.244
       }
     ],
     "demand14": [
       {
         "Modelo": "XGBoost d14",
-        "WAPE%": 0.0,
-        "R2": 1.0,
-        "MAE": 0.0,
-        "RMSE": 0.0
+        "WAPE%": 15.99,
+        "R2": 0.9294,
+        "MAE": 19.197,
+        "RMSE": 28.253
       },
       {
         "Modelo": "Random Forest d14",
-        "WAPE%": 0.0,
-        "R2": 1.0,
-        "MAE": 0.0,
-        "RMSE": 0.0
+        "WAPE%": 15.12,
+        "R2": 0.9359,
+        "MAE": 18.155,
+        "RMSE": 26.913
       },
       {
         "Modelo": "LightGBM d14",
-        "WAPE%": 0.0,
-        "R2": 1.0,
-        "MAE": 0.0,
-        "RMSE": 0.0
+        "WAPE%": 16.2,
+        "R2": 0.927,
+        "MAE": 19.456,
+        "RMSE": 28.73
       }
     ],
     "perece": {
       "XGBoost": {
-        "Acc": 0.5274,
-        "AUC": 0.5007
+        "Acc": 1.0,
+        "AUC": 1.0
       },
       "RF": {
-        "Acc": 0.5498,
-        "AUC": 0.5001
+        "Acc": 1.0,
+        "AUC": 1.0
       }
     }
   }
