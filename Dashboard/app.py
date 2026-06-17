@@ -1022,7 +1022,7 @@ def page_developer():
     modulo_label = "Logística" if st.session_state.modulo_dev == "logistica" else "Salud"
     icon_mod = "📦" if st.session_state.modulo_dev == "logistica" else "🏥"
     st.markdown(f"""
-    <div class="page-header">
+    <div class="page-title">
         <h1>{icon_mod} Vista Developer — <span class="accent">{modulo_label}</span></h1>
         <p>KPIs · Comparación interactiva de modelos · Exportar archivos · Sincronización BigQuery</p>
     </div>
@@ -1049,6 +1049,7 @@ def _dev_logistica():
 
     # ── KPI ─────────────────────────────────────────────────────
     with t_kpi:
+        st.markdown('<div class="ui-card" style="margin-bottom:16px;">', unsafe_allow_html=True)
         c1,c2,c3,c4,c5 = st.columns(5)
         c1.metric("Mejor modelo d7",  best7["Modelo"])
         c2.metric("WAPE% demand7",    f"{best7['WAPE%']:.2f}%",
@@ -1058,8 +1059,9 @@ def _dev_logistica():
         c4.metric("WAPE% demand14",   f"{best14['WAPE%']:.2f}%",
                   f"Objetivo <{KPI_TARGETS['logistica']['WAPE_demand14']}%")
         c5.metric("Acc. perecibilidad","100%","Objetivo >95%")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown("---")
+        st.markdown('<div class="ui-card" style="margin-bottom:16px;">', unsafe_allow_html=True)
         gc1, gc2 = st.columns(2)
         with gc1:
             st.plotly_chart(chart_kpi_gauge(best7["R2"], KPI_TARGETS["logistica"]["R2_demand7"],
@@ -1067,6 +1069,7 @@ def _dev_logistica():
         with gc2:
             st.plotly_chart(chart_kpi_gauge(best14["R2"], KPI_TARGETS["logistica"]["R2_demand14"],
                                              "R² demand14"), use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown("#### Estado KPIs por modelo")
         tgt = KPI_TARGETS["logistica"]["WAPE_demand7"]
@@ -1090,7 +1093,9 @@ def _dev_logistica():
         </div>
         """, unsafe_allow_html=True)
 
+        st.markdown('<div class="ui-card" style="margin-bottom:16px;">', unsafe_allow_html=True)
         st.plotly_chart(chart_wape_comparison(df_reg), use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown("---")
         st.markdown("#### Tabla completa de resultados")
@@ -1294,18 +1299,21 @@ def _dev_salud():
             )
             m = metricas_salud(data["y_test"], best_res["y_pred"], best_res["y_prob"])
 
+            st.markdown('<div class="ui-card" style="margin-bottom:16px;">', unsafe_allow_html=True)
             c1,c2,c3,c4,c5 = st.columns(5)
             c1.metric("Mejor modelo", best_name)
             c2.metric("Accuracy",    f"{m['accuracy']:.4f}", f"Obj >{KPI_TARGETS['salud']['Accuracy']}")
             c3.metric("AUC Macro",   f"{m['auc_macro']:.4f}", f"Obj >{KPI_TARGETS['salud']['AUC_Macro']}")
             c4.metric("Recall ALTO", f"{m['recall_alto']:.4f}", "Clase crítica")
             c5.metric("F1 Macro",    f"{m['f1_macro']:.4f}",  f"Obj >{KPI_TARGETS['salud']['F1_Macro']}")
+            st.markdown('</div>', unsafe_allow_html=True)
 
-            st.markdown("---")
+            st.markdown('<div class="ui-card" style="margin-bottom:16px;">', unsafe_allow_html=True)
             gc1, gc2, gc3 = st.columns(3)
             with gc1: st.plotly_chart(chart_kpi_gauge(m["accuracy"], 0.85,"Accuracy"), use_container_width=True)
             with gc2: st.plotly_chart(chart_kpi_gauge(m["auc_macro"],0.85,"AUC Macro"), use_container_width=True)
             with gc3: st.plotly_chart(chart_kpi_gauge(m["recall_alto"],0.85,"Recall ALTO"), use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown("#### Estado KPIs por modelo")
             for nm, res in data["results"].items():
@@ -1338,7 +1346,9 @@ def _dev_salud():
     with t_cmp:
         st.markdown('<div class="alert alert-teal">MLP (64,32,16) logra el mayor AUC (0.9999). XGBoost ofrece el mejor equilibrio precisión/velocidad. Todos superan KPI ≥ 0.85.</div>',
                     unsafe_allow_html=True)
+        st.markdown('<div class="ui-card" style="margin-bottom:16px;">', unsafe_allow_html=True)
         st.plotly_chart(chart_salud_comparison(METRICAS_SALUD), use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown("---")
         st.dataframe(pd.DataFrame(METRICAS_SALUD), use_container_width=True, hide_index=True)
@@ -1517,7 +1527,7 @@ def page_trabajador():
         st.caption("+ Plan nutricional")
 
     st.markdown("""
-    <div class="page-header">
+    <div class="page-title">
         <h1>👩‍⚕️ Vista Trabajador</h1>
         <p>Clasificación oncológica · Plan nutricional personalizado · Historial de pacientes</p>
     </div>
