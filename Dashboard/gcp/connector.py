@@ -229,20 +229,24 @@ def upload_bronze_logistica(df: pd.DataFrame, source: str = "manual") -> tuple[b
     return _upload(df, TABLE_BRONZE_LOGISTICA, SCHEMA_BRONZE_LOGISTICA, "WRITE_APPEND", source)
 
 
-def upload_silver_salud(df: pd.DataFrame) -> tuple[bool, str]:
-    return _upload(df, TABLE_SILVER_SALUD, [], "WRITE_TRUNCATE", "silver_transform")
+def upload_silver_salud(df: pd.DataFrame, append: bool = False) -> tuple[bool, str]:
+    disp = "WRITE_APPEND" if append else "WRITE_TRUNCATE"
+    return _upload(df, TABLE_SILVER_SALUD, [], disp, "silver_transform")
 
 
-def upload_silver_logistica(df: pd.DataFrame) -> tuple[bool, str]:
-    return _upload(df, TABLE_SILVER_LOGISTICA, [], "WRITE_TRUNCATE", "silver_transform")
+def upload_silver_logistica(df: pd.DataFrame, append: bool = False) -> tuple[bool, str]:
+    disp = "WRITE_APPEND" if append else "WRITE_TRUNCATE"
+    return _upload(df, TABLE_SILVER_LOGISTICA, [], disp, "silver_transform")
 
 
-def upload_gold_salud(df: pd.DataFrame) -> tuple[bool, str]:
-    return _upload(df, TABLE_GOLD_SALUD, [], "WRITE_TRUNCATE")
+def upload_gold_salud(df: pd.DataFrame, append: bool = False) -> tuple[bool, str]:
+    disp = "WRITE_APPEND" if append else "WRITE_TRUNCATE"
+    return _upload(df, TABLE_GOLD_SALUD, [], disp)
 
 
-def upload_gold_logistica(df: pd.DataFrame) -> tuple[bool, str]:
-    return _upload(df, TABLE_GOLD_LOGISTICA, [], "WRITE_TRUNCATE")
+def upload_gold_logistica(df: pd.DataFrame, append: bool = False) -> tuple[bool, str]:
+    disp = "WRITE_APPEND" if append else "WRITE_TRUNCATE"
+    return _upload(df, TABLE_GOLD_LOGISTICA, [], disp)
 
 
 def read_gold_salud() -> tuple[Optional[pd.DataFrame], str]:
