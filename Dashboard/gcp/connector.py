@@ -265,3 +265,110 @@ def read_gold_logistica() -> tuple[Optional[pd.DataFrame], str]:
         return df, f"{len(df):,} filas leidas de {TABLE_GOLD_LOGISTICA}"
     except Exception as e:
         return None, str(e)
+
+
+# ─────────────────────────────────────────────
+# CLOUD STORAGE — MODEL PKL PERSISTENCE
+# ─────────────────────────────────────────────
+GCS_BUCKET     = "mlaldimi-models"
+GCS_PREFIX     = "pkl"
+
+_GCS_CLIENT = None
+
+
+def _get_gcs_client():
+    global _GCS_CLIENT
+    if _GCS_CLIENT is not None:
+        return _GCS_CLIENT, None
+    try:
+        from google.cloud import storage
+        creds, _, err = _resolve_credentials()
+        if err:
+            return None, err
+        _GCS_CLIENT = storage.Client(project=GCP_PROJECT_ID, credentials=creds)
+        return _GCS_CLIENT, None
+    except ImportError:
+        return None, "google-cloud-storage no instalado. Ejecuta: pip install google-cloud-storage"
+    except Exception as e:
+        return None, str(e)
+
+
+def upload_model(local_path: str, blob_name: str = "") -> tuple[bool, str]:
+    """Sube un archivo PKL a GCS bucket mlaldimi-models."""
+    gcs, err = _get_gcs_client()
+    if err:
+        return False, err
+    try:
+        bucket = gcs.bucket(GCS_BUCKET)
+        name   = blob_name or f"{GCS_PREFIX}/{os.path.basename(local_path)}"
+        blob   = bucket.blob(name)
+        blob.upload_from_filename(local_path)
+        return True, f"Subido: gs://{GCS_BUCKET}/{name}"
+    except Exception as e:
+        return False, str(e)
+
+
+def download_model(blob_name: str, local_path: str) -> tuple[bool, str]:
+    """Descarga un PKL desde GCS a local_path. Retorna (ok, mensaje)."""
+    gcs, err = _get_gcs_client()
+    if err:
+        return False, err
+    try:
+        bucket = gcs.bucket(GCS_BUCKET)
+        blob   = bucket.blob(blob_name)
+        if not blob.exists():
+            return False, f"No existe en GCS: gs://{GCS_BUCKET}/{blob_name}"
+        os.makedirs(os.path.dirname(local_path) or ".", exist_ok=True)
+        blob.download_to_filename(local_path)
+        return True, f"Descargado: {local_path}"
+    except Exception as e:
+        return False, str(e)
+
+
+def list_models() -> tuple[list, str]:
+    """Lista los PKLs disponibles en GCS."""
+    gcs, err = _get_gcs_client()
+    if err:
+        return [], err
+    try:
+        bucket = gcs.bucket(GCS_BUCKET)
+        blobs  = list(bucket.list_blobs(prefix=GCS_PREFIX + "/"))
+        names  = [b.name for b in blobs if b.name.endswith(".pkl")]
+        return names, f"{len(names)} modelos en gs://{GCS_BUCKET}/{GCS_PREFIX}/"
+    except Exception as e:
+        return [], str(e)
+
+
+def upload_all_models(models_dir: str) -> list[tuple[str, bool, str]]:
+    """Sube todos los PKL de models_dir a GCS. Retorna lista de (archivo, ok, msg)."""
+    results = []
+    for root, _, files in os.walk(models_dir):
+        for fname in files:
+            if not fname.endswith(".pkl"):
+                continue
+            local  = os.path.join(root, fname)
+            rel    = os.path.relpath(local, models_dir)
+            blob   = f"{GCS_PREFIX}/{rel.replace(os.sep, '/')}"
+            ok, msg = upload_model(local, blob)
+            results.append((rel, ok, msg))
+    return results
+
+
+def sync_models_from_gcs(models_dir: str) -> list[tuple[str, bool, str]]:
+    """
+    Descarga desde GCS todos los PKL que no existen localmente.
+    Retorna lista de (archivo, ok, msg).
+    """
+    names, err = list_models()
+    if err and not names:
+        return [("", False, err)]
+    results = []
+    for blob_name in names:
+        rel        = blob_name[len(GCS_PREFIX)+1:]  # quitar "pkl/"
+        local_path = os.path.join(models_dir, rel.replace("/", os.sep))
+        if os.path.exists(local_path):
+            results.append((rel, True, "ya existe localmente"))
+            continue
+        ok, msg = download_model(blob_name, local_path)
+        results.append((rel, ok, msg))
+    return results
