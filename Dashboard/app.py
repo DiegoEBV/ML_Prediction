@@ -641,8 +641,14 @@ def generate_kpi_salud():
 # PLOTLY CHART HELPERS
 # ══════════════════════════════════════════════════════════════
 _PALETTE = {"XGBoost":"#1d4ed8","Random Forest":"#059669","LightGBM":"#ea580c","MLP":"#7c3aed","RF":"#059669"}
-_LAYOUT  = dict(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                font_family="Inter", margin=dict(t=40,b=20,l=10,r=10))
+_BASE    = dict(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_family="Inter",
+                margin=dict(t=40,b=20,l=10,r=10))
+
+def _layout(**overrides):
+    """Return _BASE merged with per-chart overrides."""
+    out = dict(_BASE)
+    out.update(overrides)
+    return out
 
 
 def chart_wape_comparison(df_reg):
@@ -665,8 +671,8 @@ def chart_wape_comparison(df_reg):
     fig.add_hline(y=0.91, line_dash="dot", line_color="red",
                   annotation_text="Objetivo 0.91", row=1, col=2)
 
-    fig.update_layout(**_LAYOUT, height=380, showlegend=False,
-                      title_text="Comparacion de Modelos — Logistica", title_font_size=15)
+    fig.update_layout(**_layout(height=380, showlegend=False,
+                      title_text="Comparacion de Modelos — Logistica", title_font_size=15))
     fig.update_yaxes(showgrid=True, gridcolor="#f1f5f9")
     fig.update_xaxes(showgrid=False)
     return fig
@@ -688,8 +694,8 @@ def chart_salud_comparison(metrics_list):
         fig.add_hline(y=0.85, line_dash="dot", line_color="#ef4444",
                       annotation_text="0.85", annotation_font_size=10, row=1, col=i)
 
-    fig.update_layout(**_LAYOUT, height=400, title_text="Comparacion de Modelos — Salud Oncologica",
-                      title_font_size=15)
+    fig.update_layout(**_layout(height=400, title_text="Comparacion de Modelos — Salud Oncologica",
+                      title_font_size=15))
     fig.update_yaxes(range=[0.9,1.01], showgrid=True, gridcolor="#f1f5f9")
     fig.update_xaxes(showgrid=False, tickangle=-20)
     return fig
@@ -702,8 +708,8 @@ def chart_confusion_matrix(cm, labels=None):
         x=labels, y=labels,
         labels=dict(x="Predicho",y="Real",color="Conteo"),
     )
-    fig.update_layout(**_LAYOUT, height=380, coloraxis_showscale=False,
-                      title_text="Matriz de Confusión", title_font_size=14)
+    fig.update_layout(**_layout(height=380, coloraxis_showscale=False,
+                      title_text="Matriz de Confusión", title_font_size=14))
     fig.update_traces(textfont_size=14)
     return fig
 
@@ -718,7 +724,7 @@ def chart_feature_importance(model, feature_cols, top_n=15, title="Importancia d
         orientation="h", marker_color="#1d4ed8",
         text=[f"{v:.3f}" for v in imp[idx]], textposition="outside",
     ))
-    fig.update_layout(**_LAYOUT, height=420, title_text=title, title_font_size=14)
+    fig.update_layout(**_layout(height=420, title_text=title, title_font_size=14))
     fig.update_yaxes(showgrid=False); fig.update_xaxes(showgrid=True, gridcolor="#f1f5f9")
     return fig
 
@@ -741,7 +747,7 @@ def chart_kpi_gauge(value, target, title, fmt=".0%"):
         },
         number={"suffix":"%","valueformat":".2f"},
     ))
-    fig.update_layout(**_LAYOUT, height=230, margin=dict(t=50,b=10,l=20,r=20))
+    fig.update_layout(**_layout(height=230, margin={"t":50,"b":10,"l":20,"r":20}))
     return fig
 
 
@@ -757,9 +763,11 @@ def chart_nutrition_basket(nivel, n_pacientes, n_dias):
         marker_color=profile["color"],
         text=[f"{v}" for v in totales], textposition="outside",
     ))
-    fig.update_layout(**_LAYOUT, height=380+len(items)*8,
-                      title_text=f"Canasta Total — {n_pacientes} pacientes × {n_dias} días",
-                      title_font_size=14)
+    fig.update_layout(**_layout(
+        height=380+len(items)*8,
+        title_text=f"Canasta Total — {n_pacientes} pacientes × {n_dias} días",
+        title_font_size=14,
+    ))
     fig.update_xaxes(title_text="Cantidad total", showgrid=True, gridcolor="#f1f5f9")
     fig.update_yaxes(showgrid=False)
     return fig
@@ -888,44 +896,45 @@ def page_landing():
 # ══════════════════════════════════════════════════════════════
 def _dev_sidebar():
     with st.sidebar:
-        st.markdown("### ALDIMI-PREDICT")
-        st.markdown("**Vista Developer**")
+        st.markdown("### 🏥 ALDIMI")
         st.markdown("---")
-        if st.button("← Volver al inicio", key="back_dev"):
+        if st.button("← Inicio", key="back_dev", use_container_width=True):
             st.session_state.vista = "landing"; st.rerun()
         st.markdown("---")
-        modulo = st.radio("Módulo", ["Logística","Salud"],
-                          index=0 if st.session_state.modulo_dev == "logistica" else 1)
-        st.session_state.modulo_dev = modulo.lower().replace("í","i")
+        st.markdown("**Módulo**")
+        modulo = st.radio(
+            "", ["📦 Logística","🏥 Salud"],
+            index=0 if st.session_state.modulo_dev == "logistica" else 1,
+            label_visibility="collapsed",
+        )
+        st.session_state.modulo_dev = "logistica" if "ogística" in modulo else "salud"
         st.markdown("---")
-        st.markdown("**Proyecto GCP**")
-        st.caption("ID: 413462127752")
-        st.caption("Dataset: mlaldimi")
+        st.markdown("**GCP**")
+        st.caption("413462127752 · mlaldimi")
         if HAS_GCP:
-            try:
-                m = get_auth_method(); short = m[:42]+"..." if len(m)>42 else m
-                st.markdown(f'<div style="font-size:0.73rem;color:#6ee7b7;">{short}</div>', unsafe_allow_html=True)
-            except Exception: pass
-            if st.button("Verificar conexión GCP", key="check_gcp"):
+            if st.button("Verificar GCP", key="check_gcp", use_container_width=True):
                 ok, msg = check_connection(); st.session_state.gcp_status = (ok, msg)
-        if st.session_state.gcp_status:
-            ok, msg = st.session_state.gcp_status
-            c = "#22c55e" if ok else "#ef4444"
-            st.markdown(f'<div style="color:{c};font-size:0.78rem;">{("✓" if ok else "✗")} {msg}</div>',
-                        unsafe_allow_html=True)
+            if st.session_state.gcp_status:
+                ok, msg = st.session_state.gcp_status
+                c, icon = ("#22c55e","✓") if ok else ("#ef4444","✗")
+                st.markdown(f'<div style="color:{c};font-size:0.75rem;word-break:break-word;">{icon} {msg[:60]}</div>',
+                            unsafe_allow_html=True)
+        else:
+            st.caption("bigquery no instalado")
     return modulo
 
 
 def page_developer():
-    modulo = _dev_sidebar()
+    _dev_sidebar()
+    modulo_label = "Logística" if st.session_state.modulo_dev == "logistica" else "Salud"
     st.markdown(f"""
     <div class="header-green">
-        <h1>🛠️ Vista Developer — {modulo}</h1>
+        <h1>🛠️ Vista Developer — {modulo_label}</h1>
         <p>KPIs · Comparación interactiva · Exportar archivos · Sincronización GCP</p>
     </div>
     """, unsafe_allow_html=True)
 
-    if st.session_state.modulo_dev in ("logistica","logística"):
+    if st.session_state.modulo_dev == "logistica":
         _dev_logistica()
     else:
         _dev_salud()
@@ -1319,32 +1328,16 @@ def _dev_salud():
 # TRABAJADOR VIEW
 # ══════════════════════════════════════════════════════════════
 def page_trabajador():
+    # Minimal sidebar — navigation only
     with st.sidebar:
-        st.markdown("### ALDIMI-PREDICT")
-        st.markdown("**Vista Trabajador**")
+        st.markdown("### 🏥 ALDIMI")
         st.markdown("---")
-        if st.button("← Volver al inicio", key="back_worker"):
+        if st.button("← Inicio", key="back_worker", use_container_width=True):
             st.session_state.vista = "landing"; st.rerun()
         st.markdown("---")
-        st.markdown("**Datos del paciente**")
-        edad   = st.slider("Edad", 15, 90, 45)
-        genero = st.selectbox("Género", GENDERS)
-        pais   = st.selectbox("País / Región", COUNTRIES)
-        anio   = st.selectbox("Año diagnóstico", list(range(2015,2026)), index=9)
-        st.markdown("---")
-        st.markdown("**Factores de riesgo (0-10)**")
-        gen_r = st.slider("Riesgo Genético",  0.0,10.0,5.0,0.1)
-        air_p = st.slider("Contaminación Aire",0.0,10.0,5.0,0.1)
-        alc   = st.slider("Consumo Alcohol",   0.0,10.0,3.0,0.1)
-        smo   = st.slider("Tabaquismo",         0.0,10.0,3.0,0.1)
-        obes  = st.slider("Nivel Obesidad",     0.0,10.0,3.0,0.1)
-        st.markdown("---")
-        st.markdown("**Datos clínicos**")
-        tipo_c  = st.selectbox("Tipo de cáncer", CANCER_TYPES)
-        stage   = st.selectbox("Etapa / Stage",  CANCER_STAGES)
-        cost    = st.number_input("Costo tratamiento (USD)", 0.0,200000.0,30000.0,1000.0)
-        surviv  = st.number_input("Años supervivencia", 0.0,10.0,3.0,0.1)
-        btn_cls = st.button("🔍 Clasificar Paciente", use_container_width=True)
+        st.caption("Vista Trabajador")
+        st.caption("Clasificación oncológica")
+        st.caption("+ Plan nutricional")
 
     st.markdown("""
     <div class="header-purple">
@@ -1356,13 +1349,13 @@ def page_trabajador():
     t_cls, t_nutr, t_hist = st.tabs([
         "🔬 Clasificación Individual",
         "🥗 Plan Nutricional",
-        "📋 Historial de Pacientes",
+        "📋 Historial",
     ])
 
     data = load_and_train_salud()
 
     # ──────────────────────────────────────────────────────────
-    # TAB 1 — CLASIFICACION
+    # TAB 1 — CLASIFICACION  (form in main area)
     # ──────────────────────────────────────────────────────────
     with t_cls:
         if not data:
@@ -1375,85 +1368,134 @@ def page_trabajador():
             )[0] if data["results"] else list(data["models"].keys())[0]
             best_model = data["models"][best_model_name]
 
-            if btn_cls:
-                pd_dict = {
-                    "Age":edad,"Gender":genero,"Country_Region":pais,"Year":anio,
-                    "Genetic_Risk":gen_r,"Air_Pollution":air_p,"Alcohol_Use":alc,
-                    "Smoking":smo,"Obesity_Level":obes,"Cancer_Type":tipo_c,
-                    "Cancer_Stage":stage,"Treatment_Cost_USD":cost,"Survival_Years":surviv,
-                }
-                try:
-                    vec    = build_vector_salud(pd_dict, data["feature_cols"])
-                    vec_sc = data["scaler"].transform(vec)
-                    pred   = int(best_model.predict(vec_sc)[0])
-                    probs  = best_model.predict_proba(vec_sc)[0]
-                    label, cls_css, color = priority_info(pred)
+            # ── Two-column layout: form | result ──
+            form_col, result_col = st.columns([1, 1], gap="large")
 
-                    # Store result for nutrition tab
-                    st.session_state.plan_result = {"pred":pred,"label":label,"cls_css":cls_css,"pd_dict":pd_dict}
+            with form_col:
+                st.markdown("""
+                <div style="background:#f8fafc;border-radius:16px;padding:24px 28px;border:1px solid #e2e8f0;">
+                <div style="font-size:1rem;font-weight:700;color:#1e40af;margin-bottom:16px;
+                     border-bottom:2px solid #dbeafe;padding-bottom:8px;">
+                📋 Datos del Paciente
+                </div>
+                """, unsafe_allow_html=True)
 
-                    st.markdown(f"""
-                    <div class="risk-card risk-{cls_css}">
-                        <div class="risk-label">Riesgo {label}</div>
-                        <div class="risk-sub">Modelo: {best_model_name} · {tipo_c} {stage}</div>
+                with st.form("form_clasificacion"):
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        edad   = st.number_input("Edad", 15, 90, 45)
+                        genero = st.selectbox("Género", GENDERS)
+                        pais   = st.selectbox("País / Región", COUNTRIES)
+                        anio   = st.selectbox("Año diagnóstico", list(range(2015,2026)), index=9)
+                    with c2:
+                        tipo_c = st.selectbox("Tipo de cáncer", CANCER_TYPES)
+                        stage  = st.selectbox("Etapa", CANCER_STAGES)
+                        cost   = st.number_input("Costo tratamiento (USD)", 0.0, 200000.0, 30000.0, 1000.0)
+                        surviv = st.number_input("Años de supervivencia", 0.0, 10.0, 3.0, 0.1)
+
+                    st.markdown("**Factores de riesgo** (escala 0 – 10)")
+                    r1, r2 = st.columns(2)
+                    with r1:
+                        gen_r = st.slider("Riesgo Genético",   0.0, 10.0, 5.0, 0.1)
+                        air_p = st.slider("Contam. del Aire",  0.0, 10.0, 5.0, 0.1)
+                        alc   = st.slider("Consumo de Alcohol",0.0, 10.0, 3.0, 0.1)
+                    with r2:
+                        smo  = st.slider("Tabaquismo",         0.0, 10.0, 3.0, 0.1)
+                        obes = st.slider("Nivel de Obesidad",  0.0, 10.0, 3.0, 0.1)
+
+                    btn_cls = st.form_submit_button(
+                        "🔍 Clasificar Paciente",
+                        use_container_width=True,
+                        type="primary",
+                    )
+
+                st.markdown("</div>", unsafe_allow_html=True)
+
+            with result_col:
+                if btn_cls:
+                    pd_dict = {
+                        "Age":edad,"Gender":genero,"Country_Region":pais,"Year":anio,
+                        "Genetic_Risk":gen_r,"Air_Pollution":air_p,"Alcohol_Use":alc,
+                        "Smoking":smo,"Obesity_Level":obes,"Cancer_Type":tipo_c,
+                        "Cancer_Stage":stage,"Treatment_Cost_USD":cost,"Survival_Years":surviv,
+                    }
+                    try:
+                        vec    = build_vector_salud(pd_dict, data["feature_cols"])
+                        vec_sc = data["scaler"].transform(vec)
+                        pred   = int(best_model.predict(vec_sc)[0])
+                        probs  = best_model.predict_proba(vec_sc)[0]
+                        label, cls_css, color = priority_info(pred)
+                        st.session_state.plan_result = {"pred":pred,"label":label,"cls_css":cls_css,"pd_dict":pd_dict}
+
+                        st.markdown(f"""
+                        <div class="risk-card risk-{cls_css}">
+                            <div style="font-size:0.85rem;color:#64748b;margin-bottom:8px;">RESULTADO DE CLASIFICACIÓN</div>
+                            <div class="risk-label">⚕ Riesgo {label}</div>
+                            <div class="risk-sub" style="margin-top:10px;">{tipo_c} · {stage}</div>
+                            <div style="font-size:0.78rem;color:#6b7280;margin-top:6px;">Modelo: {best_model_name}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                        # Gauge de probabilidad
+                        prob_df = pd.DataFrame({
+                            "Clase": ["Bajo","Medio","Alto"],
+                            "Prob %": [round(float(p)*100,1) for p in probs],
+                        })
+                        fig_prob = px.bar(
+                            prob_df, x="Clase", y="Prob %",
+                            color="Clase", text=[f"{v:.1f}%" for v in prob_df["Prob %"]],
+                            color_discrete_map={"Bajo":"#22c55e","Medio":"#f59e0b","Alto":"#ef4444"},
+                        )
+                        fig_prob.update_layout(**_layout(height=260, showlegend=False,
+                                               yaxis=dict(range=[0,115],title=""),
+                                               xaxis=dict(title="")))
+                        fig_prob.update_traces(textposition="outside")
+                        st.plotly_chart(fig_prob, use_container_width=True)
+
+                        alert_type = "red" if pred==2 else "yellow" if pred==1 else "green"
+                        action = ("🚨 Derivar a oncología/nutrición clínica con urgencia." if pred==2 else
+                                  "⚠️ Seguimiento intensivo y soporte nutricional reforzado." if pred==1 else
+                                  "✅ Monitoreo rutinario y dieta preventiva.")
+                        st.markdown(f"""
+                        <div class="alert alert-{alert_type}" style="margin-top:12px;">
+                        <b>Acción recomendada:</b> {action}<br>
+                        <span style="font-size:0.82rem;">Ver <b>🥗 Plan Nutricional</b> para la dieta personalizada.</span>
+                        </div>""", unsafe_allow_html=True)
+
+                        st.session_state.historial_worker.append({
+                            "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                            "Edad": edad, "Género": genero, "Tipo": tipo_c, "Stage": stage,
+                            "País": pais, "Riesgo": label, "Prob_Alto": f"{probs[2]*100:.1f}%",
+                            "Modelo": best_model_name,
+                        })
+                        st.caption(f"✓ Guardado en historial ({len(st.session_state.historial_worker)} registros)")
+
+                    except Exception as e:
+                        st.error(f"Error en clasificación: {e}")
+
+                else:
+                    # Empty state
+                    st.markdown("""
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                         height:420px;border:2px dashed #e2e8f0;border-radius:16px;color:#94a3b8;text-align:center;">
+                        <div style="font-size:3rem;margin-bottom:12px;">🔬</div>
+                        <div style="font-size:1rem;font-weight:600;color:#475569;">
+                            Completa el formulario<br>y presiona Clasificar
+                        </div>
+                        <div style="font-size:0.82rem;margin-top:8px;color:#94a3b8;">
+                            El resultado aparecerá aquí
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
-
-                    # Probability bars
-                    st.markdown("#### Probabilidades por clase")
-                    prob_df = pd.DataFrame({
-                        "Clase": ["Bajo Riesgo","Medio Riesgo","Alto Riesgo"],
-                        "Probabilidad": [round(float(p)*100,2) for p in probs],
-                    })
-                    fig_prob = px.bar(
-                        prob_df, x="Clase", y="Probabilidad",
-                        color="Clase", text=[f"{v:.1f}%" for v in prob_df["Probabilidad"]],
-                        color_discrete_sequence=CLASE_COLORS,
-                    )
-                    fig_prob.update_layout(**_LAYOUT, height=300, showlegend=False,
-                                           yaxis=dict(range=[0,110]))
-                    fig_prob.update_traces(textposition="outside")
-                    st.plotly_chart(fig_prob, use_container_width=True)
-
-                    # Recommendations
-                    profile = NUTRITION_PROFILES[label]
-                    st.markdown(f"""
-                    <div class="alert alert-{'red' if pred==2 else 'yellow' if pred==1 else 'green'}">
-                    <b>📋 Acción recomendada:</b><br>
-                    {"🚨 Derivar a oncología/nutrición clínica con urgencia — riesgo ALTO." if pred==2 else
-                     "⚠️ Seguimiento intensivo y soporte nutricional reforzado." if pred==1 else
-                     "✅ Monitoreo rutinario y dieta preventiva balanceada."}
-                    <br><br>
-                    <b>Ir a la pestaña 🥗 Plan Nutricional</b> para ver la dieta recomendada.
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                    # Add to history
-                    st.session_state.historial_worker.append({
-                        "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                        "Edad": edad, "Género": genero, "Tipo": tipo_c, "Stage": stage,
-                        "País": pais, "Riesgo": label, "Prob_Alto": f"{probs[2]*100:.1f}%",
-                        "Modelo": best_model_name,
-                    })
-                    st.caption(f"Registro agregado al historial. Total: {len(st.session_state.historial_worker)}")
-
-                except Exception as e:
-                    st.error(f"Error en clasificación: {e}")
-
-            else:
-                st.markdown('<div class="alert alert-blue">Completa los datos en la barra lateral y presiona <b>Clasificar Paciente</b>.</div>',
-                            unsafe_allow_html=True)
-                # Show model info
-                if data["results"]:
-                    m_best_show = metricas_salud(
-                        data["y_test"],
-                        data["results"][best_model_name]["y_pred"],
-                        data["results"][best_model_name]["y_prob"]
-                    )
-                    c1,c2,c3 = st.columns(3)
-                    c1.metric("Modelo activo",  best_model_name)
-                    c2.metric("AUC Macro",      f"{m_best_show['auc_macro']:.4f}")
-                    c3.metric("Recall ALTO",    f"{m_best_show['recall_alto']:.4f}")
+                    if data["results"]:
+                        m_s = metricas_salud(data["y_test"],
+                                             data["results"][best_model_name]["y_pred"],
+                                             data["results"][best_model_name]["y_prob"])
+                        st.markdown("---")
+                        c1,c2,c3 = st.columns(3)
+                        c1.metric("Modelo", best_model_name)
+                        c2.metric("AUC",    f"{m_s['auc_macro']:.4f}")
+                        c3.metric("Recall ALTO", f"{m_s['recall_alto']:.4f}")
 
     # ──────────────────────────────────────────────────────────
     # TAB 2 — PLAN NUTRICIONAL (NEW)
@@ -1664,7 +1706,7 @@ def page_trabajador():
                              color="Riesgo",
                              color_discrete_map={"ALTO":"#ef4444","MEDIO":"#f59e0b","BAJO":"#22c55e"},
                              title="Distribución de riesgos")
-            fig_pie.update_layout(**_LAYOUT, height=300)
+            fig_pie.update_layout(**_layout(height=300))
             st.plotly_chart(fig_pie, use_container_width=True)
 
             st.dataframe(df_hist, use_container_width=True, hide_index=True)
