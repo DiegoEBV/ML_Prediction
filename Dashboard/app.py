@@ -38,7 +38,9 @@ try:
         upload_silver_salud, upload_silver_logistica,
         upload_gold_salud, upload_gold_logistica,
         read_gold_salud, read_gold_logistica,
-        GCP_PROJECT, DATASET_ID, get_auth_method
+        GCP_PROJECT, DATASET_ID, get_auth_method,
+        upload_all_models, sync_models_from_gcs, list_models,
+        GCS_BUCKET, GCS_PREFIX,
     )
     HAS_GCP = True
 except ImportError:
@@ -392,6 +394,18 @@ _DEFAULTS = {
 for k, v in _DEFAULTS.items():
     if k not in st.session_state:
         st.session_state[k] = v
+
+# ══════════════════════════════════════════════════════════════
+# GCS MODEL SYNC — descarga PKLs al inicio si no existen localmente
+# ══════════════════════════════════════════════════════════════
+@st.cache_resource(show_spinner="Sincronizando modelos desde GCS...")
+def _sync_models_from_gcs():
+    """Descarga PKLs desde GCS la primera vez que arranca la app."""
+    if not HAS_GCP:
+        return []
+    results = sync_models_from_gcs("models")
+    return results
+
 
 # ══════════════════════════════════════════════════════════════
 # MODEL LOADERS (cached)
@@ -1044,12 +1058,42 @@ def _dev_logistica():
         <div class="alert alert-gray">
         <b>Flujo de datos:</b><br>
         1. Sube el TXT/CSV crudo → <b>Bronze</b><br>
-        2. Ejecuta <code>setup_local.py</code> o los notebooks → produce datos limpios → sube a <b>Silver</b><br>
-        3. El pipeline de features genera la tabla <b>Gold</b> (fuente de entrenamiento)<br>
-        4. Los modelos <b>.pkl</b> en <code>Dashboard/models/</code> se cargan al inicio y NO se vuelven a entrenar
+        2. Ejecuta <code>setup_local.py</code> → limpieza → <b>Silver</b> → features → <b>Gold</b><br>
+        3. Los <b>.pkl</b> generados se suben a GCS con el botón de abajo<br>
+        4. Al arrancar Streamlit Cloud, los PKL se descargan automáticamente desde GCS
         </div>
         """, unsafe_allow_html=True)
 
+        # ── Gestión de modelos PKL en GCS ──
+        st.markdown("#### Modelos PKL — Cloud Storage (`gs://mlaldimi-models/`)")
+        pm1, pm2 = st.columns(2)
+        with pm1:
+            if st.button("☁️ Subir PKLs locales → GCS", key="upload_pkls", use_container_width=True):
+                if HAS_GCP:
+                    with st.spinner("Subiendo modelos..."):
+                        results = upload_all_models("models")
+                    for rel, ok, msg in results:
+                        st.markdown(f'<div class="alert alert-{"green" if ok else "red"}">'
+                                    f'{"✓" if ok else "✗"} <code>{rel}</code> — {msg}</div>',
+                                    unsafe_allow_html=True)
+                    if not results:
+                        st.warning("No se encontraron PKL en Dashboard/models/. Ejecuta setup_local.py primero.")
+                else:
+                    st.warning("GCP no disponible")
+        with pm2:
+            if st.button("⬇️ Ver PKLs en GCS", key="list_pkls", use_container_width=True):
+                if HAS_GCP:
+                    names, msg = list_models()
+                    if names:
+                        for n in names:
+                            st.markdown(f'<div class="alert alert-gray">📦 <code>{n}</code></div>',
+                                        unsafe_allow_html=True)
+                    else:
+                        st.info(f"Sin modelos en GCS aún. {msg}")
+                else:
+                    st.warning("GCP no disponible")
+
+        st.markdown("---")
         st.markdown("#### Cargar datos a BigQuery")
         uploaded = st.file_uploader("CSV/TXT de logística (ventas diarias)", type=["csv","txt"], key="gcp_log_file")
         if uploaded:
@@ -1747,6 +1791,9 @@ def page_trabajador():
 # MAIN ROUTING
 # ══════════════════════════════════════════════════════════════
 def main():
+    # Descarga modelos PKL desde GCS si no existen localmente (solo la primera vez)
+    _sync_models_from_gcs()
+
     v = st.session_state.vista
     if v == "landing":
         page_landing()
