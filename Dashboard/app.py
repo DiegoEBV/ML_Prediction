@@ -1087,9 +1087,9 @@ def page_developer():
 # DEVELOPER — LOGISTICA
 # ══════════════════════════════════════════════════════════════
 def _dev_logistica():
-    t_kpi, t_cmp, t_export, t_gcp, t_data = st.tabs([
+    t_kpi, t_cmp, t_export, t_data = st.tabs([
         "📊 KPI e Indicadores","🔬 Comparación de Modelos",
-        "📁 Exportar KPI","☁️ Sincronización GCP","✏️ Ingreso de Datos"
+        "📁 Exportar KPI","✏️ Ingreso de Datos"
     ])
 
     df_reg = pd.DataFrame(METRICAS_REG)
@@ -1195,72 +1195,6 @@ def _dev_logistica():
         st.markdown(f'<div class="alert alert-teal">Guardado localmente: <code>{kpi_path}</code></div>',
                     unsafe_allow_html=True)
 
-    # ── GCP ─────────────────────────────────────────────────────
-    with t_gcp:
-        ca2, cb2, cc2 = st.columns(3)
-        for col, icon, name, tbl, desc in [
-            (ca2,"🥉","Bronze","bronze_logistica","CSV/TXT crudo — sube el archivo favorita aquí"),
-            (cb2,"🥈","Silver","silver_logistica","Datos limpios — salida del notebook Logistica_Limpieza.ipynb"),
-            (cc2,"🥇","Gold",  "gold_logistica",  "Features finales — datos que alimentan los modelos PKL"),
-        ]:
-            col.markdown(
-                f'<div class="medal-card">'
-                f'<div class="medal-icon">{icon}</div>'
-                f'<div class="medal-name">{name}</div>'
-                f'<div class="medal-tbl">{tbl}</div>'
-                f'<div class="medal-sub" style="margin-top:6px;font-size:0.75rem;">{desc}</div>'
-                f'</div>', unsafe_allow_html=True
-            )
-
-        st.markdown("---")
-        st.markdown("#### Cargar datos a BigQuery")
-        uploaded = st.file_uploader("Selecciona CSV/TXT de logística (ventas diarias)", type=["csv","txt"], key="gcp_log_file", label_visibility="collapsed")
-        if uploaded:
-            size_mb = uploaded.size / (1024 * 1024)
-            preview = pd.read_csv(uploaded, nrows=5)
-            st.dataframe(preview, use_container_width=True)
-            st.caption(f"📄 {uploaded.name} · {size_mb:.1f} MB — se carga en chunks de 50 000 filas")
-            bc, sc, gc = st.columns(3)
-            with bc:
-                if st.button("→ Bronze", key="bronze_log", use_container_width=True):
-                    if HAS_GCP:
-                        with st.spinner("Subiendo a Bronze..."):
-                            uploaded.seek(0)
-                            total, err_msg = 0, ""
-                            for chunk in pd.read_csv(uploaded, chunksize=50_000):
-                                ok, msg = upload_bronze_logistica(chunk, source="dashboard")
-                                if not ok: err_msg = msg; break
-                                total += len(chunk)
-                        if err_msg: st.error(err_msg)
-                        else: st.success(f"{total:,} filas → bronze_logistica")
-                    else: st.warning("GCP no disponible — configura st.secrets[gcp_adc]")
-            with sc:
-                if st.button("→ Silver", key="silver_log", use_container_width=True):
-                    if HAS_GCP:
-                        with st.spinner("Subiendo a Silver..."):
-                            uploaded.seek(0)
-                            total, err_msg, first = 0, "", True
-                            for chunk in pd.read_csv(uploaded, chunksize=50_000):
-                                ok, msg = upload_silver_logistica(chunk, append=not first)
-                                if not ok: err_msg = msg; break
-                                total += len(chunk); first = False
-                        if err_msg: st.error(err_msg)
-                        else: st.success(f"{total:,} filas → silver_logistica")
-                    else: st.warning("GCP no disponible")
-            with gc:
-                if st.button("→ Gold", key="gold_log", use_container_width=True):
-                    if HAS_GCP:
-                        with st.spinner("Subiendo a Gold..."):
-                            uploaded.seek(0)
-                            total, err_msg, first = 0, "", True
-                            for chunk in pd.read_csv(uploaded, chunksize=50_000):
-                                ok, msg = upload_gold_logistica(chunk, append=not first)
-                                if not ok: err_msg = msg; break
-                                total += len(chunk); first = False
-                        if err_msg: st.error(err_msg)
-                        else: st.success(f"{total:,} filas → gold_logistica")
-                    else: st.warning("GCP no disponible")
-
     # ── DATA ────────────────────────────────────────────────────
     with t_data:
         with st.form("form_log_dev"):
@@ -1305,9 +1239,9 @@ def _dev_logistica():
 # DEVELOPER — SALUD
 # ══════════════════════════════════════════════════════════════
 def _dev_salud():
-    t_kpi, t_cmp, t_export, t_gcp, t_data = st.tabs([
+    t_kpi, t_cmp, t_export, t_data = st.tabs([
         "📊 KPI e Indicadores","🔬 Comparación de Modelos",
-        "📁 Exportar KPI","☁️ Sincronización GCP","✏️ Ingreso de Datos"
+        "📁 Exportar KPI","✏️ Ingreso de Datos"
     ])
 
     data = load_and_train_salud()
@@ -1423,72 +1357,6 @@ def _dev_salud():
         with open(kpi_path,"w",encoding="utf-8") as f: json.dump(kpi_data,f,indent=2,ensure_ascii=False)
         st.markdown(f'<div class="alert alert-teal">Guardado: <code>{kpi_path}</code></div>',
                     unsafe_allow_html=True)
-
-    # ── GCP ─────────────────────────────────────────────────────
-    with t_gcp:
-        ca3, cb3, cc3 = st.columns(3)
-        for col, icon, name, tbl, desc in [
-            (ca3,"🥉","Bronze","bronze_salud","CSV/TXT crudo — sube el archivo de pacientes aquí"),
-            (cb3,"🥈","Silver","silver_salud","Datos limpios — salida del notebook Salud_Limpieza.ipynb"),
-            (cc3,"🥇","Gold",  "gold_salud",  "Features finales — datos que alimentan los modelos PKL"),
-        ]:
-            col.markdown(
-                f'<div class="medal-card">'
-                f'<div class="medal-icon">{icon}</div>'
-                f'<div class="medal-name">{name}</div>'
-                f'<div class="medal-tbl">{tbl}</div>'
-                f'<div class="medal-sub" style="margin-top:6px;font-size:0.75rem;">{desc}</div>'
-                f'</div>', unsafe_allow_html=True
-            )
-
-        st.markdown("---")
-        st.markdown("#### Cargar datos a BigQuery")
-        uploaded = st.file_uploader("Selecciona CSV/TXT de salud (pacientes oncológicos)", type=["csv","txt"], key="gcp_salud_file", label_visibility="collapsed")
-        if uploaded:
-            size_mb = uploaded.size / (1024 * 1024)
-            preview = pd.read_csv(uploaded, nrows=5)
-            st.dataframe(preview, use_container_width=True)
-            st.caption(f"📄 {uploaded.name} · {size_mb:.1f} MB — se carga en chunks de 50 000 filas")
-            bc2, sc2, gc2 = st.columns(3)
-            with bc2:
-                if st.button("→ Bronze", key="bronze_sal", use_container_width=True):
-                    if HAS_GCP:
-                        with st.spinner("Subiendo a Bronze..."):
-                            uploaded.seek(0)
-                            total, err_msg = 0, ""
-                            for chunk in pd.read_csv(uploaded, chunksize=50_000):
-                                ok, msg = upload_bronze_salud(chunk, source="dashboard")
-                                if not ok: err_msg = msg; break
-                                total += len(chunk)
-                        if err_msg: st.error(err_msg)
-                        else: st.success(f"{total:,} filas → bronze_salud")
-                    else: st.warning("GCP no disponible — configura st.secrets[gcp_adc]")
-            with sc2:
-                if st.button("→ Silver", key="silver_sal", use_container_width=True):
-                    if HAS_GCP:
-                        with st.spinner("Subiendo a Silver..."):
-                            uploaded.seek(0)
-                            total, err_msg, first = 0, "", True
-                            for chunk in pd.read_csv(uploaded, chunksize=50_000):
-                                ok, msg = upload_silver_salud(chunk, append=not first)
-                                if not ok: err_msg = msg; break
-                                total += len(chunk); first = False
-                        if err_msg: st.error(err_msg)
-                        else: st.success(f"{total:,} filas → silver_salud")
-                    else: st.warning("GCP no disponible")
-            with gc2:
-                if st.button("→ Gold", key="gold_sal", use_container_width=True):
-                    if HAS_GCP:
-                        with st.spinner("Subiendo a Gold..."):
-                            uploaded.seek(0)
-                            total, err_msg, first = 0, "", True
-                            for chunk in pd.read_csv(uploaded, chunksize=50_000):
-                                ok, msg = upload_gold_salud(chunk, append=not first)
-                                if not ok: err_msg = msg; break
-                                total += len(chunk); first = False
-                        if err_msg: st.error(err_msg)
-                        else: st.success(f"{total:,} filas → gold_salud")
-                    else: st.warning("GCP no disponible")
 
     # ── DATA ────────────────────────────────────────────────────
     with t_data:
