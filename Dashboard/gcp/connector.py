@@ -206,7 +206,7 @@ def _upload(df: pd.DataFrame, table_id: str, schema_list: list,
     try:
         from google.cloud import bigquery
         df = df.copy()
-        df["ingestion_ts"] = datetime.datetime.utcnow().isoformat()
+        df["ingestion_ts"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         if source:
             df["source"] = source
         _ensure_table(client, table_id, schema_list)
