@@ -530,13 +530,16 @@ for k, v in _DEFAULTS.items():
 # ══════════════════════════════════════════════════════════════
 # GCS MODEL SYNC — descarga PKLs al inicio si no existen localmente
 # ══════════════════════════════════════════════════════════════
-@st.cache_resource(show_spinner="Sincronizando modelos desde GCS...")
+@st.cache_resource
 def _sync_models_from_gcs():
-    """Descarga PKLs desde GCS la primera vez que arranca la app."""
+    """Descarga PKLs desde GCS la primera vez que arranca la app. Nunca crashea."""
     if not HAS_GCP:
         return []
-    results = sync_models_from_gcs("models")
-    return results
+    try:
+        results = sync_models_from_gcs("models")
+        return results
+    except Exception:
+        return []
 
 
 # ══════════════════════════════════════════════════════════════
@@ -1970,8 +1973,10 @@ def page_trabajador():
 # MAIN ROUTING
 # ══════════════════════════════════════════════════════════════
 def main():
-    # Descarga modelos PKL desde GCS si no existen localmente (solo la primera vez)
-    _sync_models_from_gcs()
+    try:
+        _sync_models_from_gcs()
+    except Exception:
+        pass
 
     v = st.session_state.vista
     if v == "landing":
