@@ -165,12 +165,19 @@ def read_data(path):
     import pandas as pd
     return pd.read_csv(path, sep=",", low_memory=False)
 
-def find_csv(pattern, folder="."):
-    """Busca .csv o .txt por nombre parcial en la carpeta actual."""
-    for ext in ("*.csv", "*.txt"):
-        for f in Path(folder).glob(ext):
-            if pattern.lower() in f.name.lower():
-                return str(f)
+def find_csv(pattern):
+    """Busca .csv o .txt por nombre parcial en varias carpetas del repo."""
+    search_dirs = [
+        ROOT,
+        ROOT / "Dashboard" / "data",
+        ROOT / "Dashboard",
+        Path("."),
+    ]
+    for folder in search_dirs:
+        for ext in ("*.csv", "*.txt"):
+            for f in Path(folder).glob(ext):
+                if pattern.lower() in f.name.lower():
+                    return str(f)
     return None
 
 def main():
@@ -187,7 +194,7 @@ def main():
 
     # Buscar CSVs automáticamente si no se pasan como argumento
     csv_salud = args.salud or find_csv("cancer") or find_csv("salud")
-    csv_log   = args.logistica or find_csv("favorita") or find_csv("logistica")
+    csv_log   = args.logistica or find_csv("favorita") or find_csv("logistica") or find_csv("aldimi")
 
     print(f"\n  Archivo Salud     : {csv_salud or 'no encontrado (.csv o .txt)'}")
     print(f"  Archivo Logística : {csv_log or 'no encontrado (.csv o .txt)'}")
