@@ -107,6 +107,38 @@ section[data-testid="stSidebar"] .stButton>button{
 section[data-testid="stSidebar"] .stButton>button:hover{
     background:rgba(255,255,255,.2)!important;}
 
+/* ── sidebar inputs (number_input, selectbox, text_input) ── */
+section[data-testid="stSidebar"] input,
+section[data-testid="stSidebar"] textarea,
+section[data-testid="stSidebar"] select,
+section[data-testid="stSidebar"] [data-baseweb="input"],
+section[data-testid="stSidebar"] [data-baseweb="base-input"],
+section[data-testid="stSidebar"] [data-baseweb="select"],
+section[data-testid="stSidebar"] [data-baseweb="select"] div,
+section[data-testid="stSidebar"] .stNumberInput input,
+section[data-testid="stSidebar"] .stTextInput input{
+    background:rgba(255,255,255,.12)!important;
+    color:#fff!important;
+    border:1px solid rgba(255,255,255,.25)!important;
+    border-radius:8px!important;}
+section[data-testid="stSidebar"] [data-baseweb="select"] [data-testid="stSelectboxDiv"],
+section[data-testid="stSidebar"] [data-baseweb="select"] span,
+section[data-testid="stSidebar"] [data-baseweb="select"] div[class*="ValueContainer"] *,
+section[data-testid="stSidebar"] [data-testid="stSelectbox"] *{
+    color:#fff!important;background:transparent!important;}
+section[data-testid="stSidebar"] input::placeholder{color:rgba(255,255,255,.45)!important;}
+/* flechas +/- del number input */
+section[data-testid="stSidebar"] .stNumberInput button{
+    background:rgba(255,255,255,.15)!important;color:#fff!important;
+    border:1px solid rgba(255,255,255,.2)!important;border-radius:6px!important;}
+section[data-testid="stSidebar"] .stNumberInput button:hover{background:rgba(255,255,255,.28)!important;}
+/* slider track y thumb */
+section[data-testid="stSidebar"] [data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"]{
+    background:#60a5fa!important;border-color:#93c5fd!important;}
+section[data-testid="stSidebar"] .stCaption,
+section[data-testid="stSidebar"] [data-testid="stCaptionContainer"]{
+    color:#93c5fd!important;font-size:.75rem!important;}
+
 /* ── metrics ── */
 [data-testid="stMetric"]{
     background:#fff!important;border-radius:14px!important;padding:16px 18px!important;
