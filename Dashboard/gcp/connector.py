@@ -4,10 +4,9 @@ GCP BigQuery connector — arquitectura medallion Bronze / Silver / Gold
 Proyecto: 413462127752 | Dataset: mlaldimi
 
 Autenticacion (en orden de prioridad):
-  1. st.secrets["gcp_adc"]  — OAuth2 ADC guardado en Streamlit Cloud secrets
-  2. GOOGLE_APPLICATION_CREDENTIALS — variable de entorno (service account JSON)
-  3. gcp/secrets/gcp_service_account.json — archivo local (service account)
-  4. Application Default Credentials — gcloud auth application-default login
+  1. Variable GOOGLE_APPLICATION_CREDENTIALS apuntando al JSON de service account
+  2. Archivo secrets/gcp_service_account.json junto a este modulo
+  3. Application Default Credentials (gcloud auth application-default login)
 """
 
 import os
@@ -28,46 +27,26 @@ TABLE_SILVER_LOGISTICA = f"{GCP_PROJECT}.{DATASET_ID}.silver_logistica"
 TABLE_GOLD_SALUD       = f"{GCP_PROJECT}.{DATASET_ID}.gold_salud"
 TABLE_GOLD_LOGISTICA   = f"{GCP_PROJECT}.{DATASET_ID}.gold_logistica"
 
-_SA_FILE   = os.path.join(os.path.dirname(__file__), "secrets", "gcp_service_account.json")
+# Ruta al JSON de service account junto a este archivo
+_SA_FILE = os.path.join(os.path.dirname(__file__), "secrets", "gcp_service_account.json")
+
 _BQ_CLIENT = None
 
 
 def _resolve_credentials():
     """
-    Resuelve credenciales GCP en orden de prioridad.
-    Retorna (credentials_obj | None, descripcion_str, error_str | None).
+    Resuelve credenciales GCP en orden de prioridad:
+      1. GOOGLE_APPLICATION_CREDENTIALS (variable de entorno)
+      2. gcp/secrets/gcp_service_account.json
+      3. Application Default Credentials (ADC)
+    Devuelve (credentials_obj | None, error_str | None)
     """
-    # 1. st.secrets["gcp_adc"] — OAuth2 refresh token (Streamlit Cloud)
-    try:
-        import streamlit as st
-        if "gcp_adc" in st.secrets:
-            adc = dict(st.secrets["gcp_adc"])
-            if adc.get("type") == "authorized_user":
-                from google.oauth2.credentials import Credentials
-                creds = Credentials(
-                    token=None,
-                    refresh_token=adc["refresh_token"],
-                    client_id=adc["client_id"],
-                    client_secret=adc["client_secret"],
-                    token_uri="https://oauth2.googleapis.com/token",
-                )
-                return creds, "st.secrets[gcp_adc] — OAuth2 ADC", None
-            elif adc.get("type") == "service_account":
-                from google.oauth2 import service_account
-                creds = service_account.Credentials.from_service_account_info(
-                    adc,
-                    scopes=["https://www.googleapis.com/auth/bigquery"],
-                )
-                return creds, "st.secrets[gcp_adc] — Service Account", None
-    except Exception:
-        pass
-
-    # 2. Variable de entorno GOOGLE_APPLICATION_CREDENTIALS
+    # 1. Variable de entorno ya configurada -> BigQuery la usará automáticamente
     env_creds = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
     if env_creds and os.path.exists(env_creds):
-        return None, f"GOOGLE_APPLICATION_CREDENTIALS: {env_creds}", None
+        return None, None  # bigquery.Client() la tomará solo
 
-    # 3. Archivo local secrets/gcp_service_account.json
+    # 2. Archivo local secrets/
     if os.path.exists(_SA_FILE):
         try:
             from google.oauth2 import service_account
@@ -75,12 +54,12 @@ def _resolve_credentials():
                 _SA_FILE,
                 scopes=["https://www.googleapis.com/auth/bigquery"],
             )
-            return creds, f"Service Account local: {_SA_FILE}", None
+            return creds, None
         except Exception as e:
-            return None, "", f"Error cargando service account: {e}"
+            return None, f"Error cargando service account: {e}"
 
-    # 4. ADC — gcloud auth application-default login
-    return None, "Application Default Credentials (gcloud ADC)", None
+    # 3. ADC (funciona si ya se ejecutó `gcloud auth application-default login`)
+    return None, None
 
 
 def _get_client():
@@ -89,10 +68,10 @@ def _get_client():
         return _BQ_CLIENT, None
     try:
         from google.cloud import bigquery
-        creds, _, err = _resolve_credentials()
+        creds, err = _resolve_credentials()
         if err:
             return None, err
-        _BQ_CLIENT = bigquery.Client(project=GCP_PROJECT_ID, credentials=creds)
+        _BQ_CLIENT = bigquery.Client(project=GCP_PROJECT, credentials=creds)
         return _BQ_CLIENT, None
     except ImportError:
         return None, "google-cloud-bigquery no instalado. Ejecuta: pip install google-cloud-bigquery"
@@ -101,10 +80,13 @@ def _get_client():
 
 
 def get_auth_method() -> str:
-    _, desc, err = _resolve_credentials()
-    if err:
-        return f"Error: {err}"
-    return desc or "ADC"
+    """Devuelve descripcion del metodo de autenticacion activo."""
+    env_creds = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+    if env_creds and os.path.exists(env_creds):
+        return f"Service Account via GOOGLE_APPLICATION_CREDENTIALS: {env_creds}"
+    if os.path.exists(_SA_FILE):
+        return f"Service Account via archivo local: {_SA_FILE}"
+    return "Application Default Credentials (ADC / gcloud)"
 
 
 def check_connection() -> tuple[bool, str]:
@@ -113,10 +95,9 @@ def check_connection() -> tuple[bool, str]:
         return False, err
     try:
         list(client.list_datasets())
-        return True, f"Conectado — {get_auth_method()}"
+        return True, f"Conectado a GCP BigQuery ({GCP_PROJECT_ID}) | {get_auth_method()}"
     except Exception as e:
         return False, f"Error de conexion: {e}"
-
 
 
 # ─────────────────────────────────────────────
@@ -272,10 +253,11 @@ def read_gold_logistica() -> tuple[Optional[pd.DataFrame], str]:
 
 
 # ─────────────────────────────────────────────
-# CLOUD STORAGE — MODEL PKL PERSISTENCE
+# GCS MODEL FUNCTIONS
 # ─────────────────────────────────────────────
-GCS_BUCKET     = "mlaldimi-models"
-GCS_PREFIX     = "pkl"
+
+GCS_BUCKET = GCP_PROJECT
+GCS_PREFIX = "models"
 
 _GCS_CLIENT = None
 
@@ -286,93 +268,74 @@ def _get_gcs_client():
         return _GCS_CLIENT, None
     try:
         from google.cloud import storage
-        creds, _, err = _resolve_credentials()
+        creds, err = _resolve_credentials()
         if err:
             return None, err
-        _GCS_CLIENT = storage.Client(project=GCP_PROJECT_ID, credentials=creds)
+        _GCS_CLIENT = storage.Client(project=GCP_PROJECT, credentials=creds)
         return _GCS_CLIENT, None
     except ImportError:
-        return None, "google-cloud-storage no instalado. Ejecuta: pip install google-cloud-storage"
+        return None, "google-cloud-storage no instalado."
     except Exception as e:
         return None, str(e)
 
 
-def upload_model(local_path: str, blob_name: str = "") -> tuple[bool, str]:
-    """Sube un archivo PKL a GCS bucket mlaldimi-models."""
+def upload_all_models(local_dir: str = "models") -> list[tuple[str, bool, str]]:
+    """Sube todos los .pkl del directorio local a GCS. Devuelve lista de (nombre, ok, msg)."""
     gcs, err = _get_gcs_client()
     if err:
-        return False, err
+        return [(local_dir, False, err)]
+    results = []
     try:
         bucket = gcs.bucket(GCS_BUCKET)
-        name   = blob_name or f"{GCS_PREFIX}/{os.path.basename(local_path)}"
-        blob   = bucket.blob(name)
-        blob.upload_from_filename(local_path)
-        return True, f"Subido: gs://{GCS_BUCKET}/{name}"
+        for fname in os.listdir(local_dir):
+            if not fname.endswith(".pkl"):
+                continue
+            local_path = os.path.join(local_dir, fname)
+            blob_name  = f"{GCS_PREFIX}/{fname}"
+            try:
+                blob = bucket.blob(blob_name)
+                blob.upload_from_filename(local_path)
+                results.append((fname, True, f"gs://{GCS_BUCKET}/{blob_name}"))
+            except Exception as e:
+                results.append((fname, False, str(e)))
     except Exception as e:
-        return False, str(e)
+        results.append((local_dir, False, str(e)))
+    return results
 
 
-def download_model(blob_name: str, local_path: str) -> tuple[bool, str]:
-    """Descarga un PKL desde GCS a local_path. Retorna (ok, mensaje)."""
+def sync_models_from_gcs(local_dir: str = "models") -> list[tuple[str, bool, str]]:
+    """Descarga .pkl desde GCS al directorio local. Devuelve lista de (nombre, ok, msg)."""
     gcs, err = _get_gcs_client()
     if err:
-        return False, err
+        return [(local_dir, False, err)]
+    results = []
     try:
+        os.makedirs(local_dir, exist_ok=True)
         bucket = gcs.bucket(GCS_BUCKET)
-        blob   = bucket.blob(blob_name)
-        if not blob.exists():
-            return False, f"No existe en GCS: gs://{GCS_BUCKET}/{blob_name}"
-        os.makedirs(os.path.dirname(local_path) or ".", exist_ok=True)
-        blob.download_to_filename(local_path)
-        return True, f"Descargado: {local_path}"
+        blobs  = list(bucket.list_blobs(prefix=GCS_PREFIX + "/"))
+        for blob in blobs:
+            if not blob.name.endswith(".pkl"):
+                continue
+            fname      = os.path.basename(blob.name)
+            local_path = os.path.join(local_dir, fname)
+            try:
+                blob.download_to_filename(local_path)
+                results.append((fname, True, local_path))
+            except Exception as e:
+                results.append((fname, False, str(e)))
     except Exception as e:
-        return False, str(e)
+        results.append((local_dir, False, str(e)))
+    return results
 
 
-def list_models() -> tuple[list, str]:
-    """Lista los PKLs disponibles en GCS."""
+def list_models() -> list[str]:
+    """Lista los .pkl disponibles en GCS. Devuelve lista de nombres."""
     gcs, err = _get_gcs_client()
     if err:
-        return [], err
+        return []
     try:
         bucket = gcs.bucket(GCS_BUCKET)
         blobs  = list(bucket.list_blobs(prefix=GCS_PREFIX + "/"))
-        names  = [b.name for b in blobs if b.name.endswith(".pkl")]
-        return names, f"{len(names)} modelos en gs://{GCS_BUCKET}/{GCS_PREFIX}/"
-    except Exception as e:
-        return [], str(e)
-
-
-def upload_all_models(models_dir: str) -> list[tuple[str, bool, str]]:
-    """Sube todos los PKL de models_dir a GCS. Retorna lista de (archivo, ok, msg)."""
-    results = []
-    for root, _, files in os.walk(models_dir):
-        for fname in files:
-            if not fname.endswith(".pkl"):
-                continue
-            local  = os.path.join(root, fname)
-            rel    = os.path.relpath(local, models_dir)
-            blob   = f"{GCS_PREFIX}/{rel.replace(os.sep, '/')}"
-            ok, msg = upload_model(local, blob)
-            results.append((rel, ok, msg))
-    return results
-
-
-def sync_models_from_gcs(models_dir: str) -> list[tuple[str, bool, str]]:
-    """
-    Descarga desde GCS todos los PKL que no existen localmente.
-    Retorna lista de (archivo, ok, msg).
-    """
-    names, err = list_models()
-    if err and not names:
-        return [("", False, err)]
-    results = []
-    for blob_name in names:
-        rel        = blob_name[len(GCS_PREFIX)+1:]  # quitar "pkl/"
-        local_path = os.path.join(models_dir, rel.replace("/", os.sep))
-        if os.path.exists(local_path):
-            results.append((rel, True, "ya existe localmente"))
-            continue
-        ok, msg = download_model(blob_name, local_path)
-        results.append((rel, ok, msg))
-    return results
+        return [os.path.basename(b.name) for b in blobs if b.name.endswith(".pkl")]
+    except Exception:
+        return []
