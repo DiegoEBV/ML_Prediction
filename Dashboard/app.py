@@ -87,9 +87,11 @@ section[data-testid="stSidebar"] h1,
 section[data-testid="stSidebar"] h2,
 section[data-testid="stSidebar"] h3{color:#fff!important;font-weight:800!important;}
 section[data-testid="stSidebar"] strong{color:#fff!important;font-weight:700!important;}
+section[data-testid="stSidebar"]{width:290px!important;min-width:290px!important;}
 section[data-testid="stSidebar"] label{
-    color:#93c5fd!important;font-size:.78rem!important;
-    font-weight:700!important;text-transform:uppercase!important;letter-spacing:.4px!important;}
+    color:#93c5fd!important;font-size:.77rem!important;
+    font-weight:700!important;text-transform:uppercase!important;letter-spacing:.3px!important;
+    white-space:normal!important;overflow:visible!important;}
 section[data-testid="stSidebar"] hr{border-color:rgba(255,255,255,.12)!important;margin:10px 0!important;}
 section[data-testid="stSidebar"] .stRadio>div{gap:4px!important;}
 section[data-testid="stSidebar"] .stRadio label{
@@ -1272,10 +1274,10 @@ def page_nutricion():
         _sidebar_back(key="back_nut")
         st.markdown("---")
         st.markdown("### Configuración")
-        n_bajo  = st.number_input("Pacientes Bajo riesgo",  0,500,10, step=1)
-        n_medio = st.number_input("Pacientes Medio riesgo", 0,500,8,  step=1)
-        n_alto  = st.number_input("Pacientes Alto riesgo",  0,500,5,  step=1)
-        dias    = st.selectbox("Período",["7 días","14 días","30 días"])
+        n_bajo  = st.slider("Pacientes Bajo riesgo",  0, 200, 10)
+        n_medio = st.slider("Pacientes Medio riesgo", 0, 200, 8)
+        n_alto  = st.slider("Pacientes Alto riesgo",  0, 200, 5)
+        dias    = st.selectbox("Período", ["7 días","14 días","30 días"])
         dias_n  = int(dias.split()[0])
         st.markdown("---")
         st.markdown(f"**Total pacientes:** {n_bajo+n_medio+n_alto}")
