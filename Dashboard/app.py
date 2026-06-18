@@ -1563,8 +1563,8 @@ def page_trabajador():
         "🔬 Clasificación Individual", "📋 Historial de Pacientes", "ℹ️ Info del Sistema"
     ])
 
-    data = load_and_train_salud()
-
+    with tab_cls:
+        col_result, col_input = st.columns([1, 1], gap="large")
         with col_result:
             st.markdown('<div class="section-title">Resultado de Clasificación</div>', unsafe_allow_html=True)
             if btn_clasificar:
