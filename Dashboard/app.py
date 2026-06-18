@@ -404,9 +404,10 @@ def _heatmap(z, x_labels, y_labels, title=""):
         showscale=False, text=z,
         texttemplate="%{text}", textfont=dict(size=16),
     ))
-    fig.update_layout(**_LAYOUT, title=dict(text=title, font=dict(size=13)),
+    layout = {**_LAYOUT, "margin": dict(l=60, r=20, t=50, b=60)}
+    fig.update_layout(**layout, title=dict(text=title, font=dict(size=13)),
                       xaxis_title="Predicción", yaxis=dict(title="Real", autorange="reversed"),
-                      height=300, margin=dict(l=60,r=20,t=50,b=60))
+                      height=300)
     return fig
 
 
@@ -430,8 +431,9 @@ def _pie(labels, values, title="", colors=None, height=300):
         marker=dict(colors=colors or ["#1d4ed8","#0d9488","#7c3aed","#f97316","#0369a1","#d97706"]),
         hole=0.4, textinfo="percent+label", textfont=dict(size=12),
     ))
-    fig.update_layout(**_LAYOUT, title=dict(text=title, font=dict(size=13)),
-                      height=height, showlegend=False, margin=dict(l=20,r=20,t=50,b=20))
+    layout = {**_LAYOUT, "margin": dict(l=20, r=20, t=50, b=20)}
+    fig.update_layout(**layout, title=dict(text=title, font=dict(size=13)),
+                      height=height, showlegend=False)
     return fig
 
 
@@ -1211,9 +1213,10 @@ def page_trabajador():
             dist=data["dist"]; counts=[dist.get(i,0) for i in range(3)]
             fig_d=go.Figure(go.Bar(x=CLASE_LABELS,y=counts,marker_color=CLASE_COLORS,marker_line_width=0,
                 text=[f"{c:,}<br>({c/sum(counts)*100:.1f}%)" for c in counts],textposition="outside"))
-            fig_d.update_layout(**_LAYOUT,height=240,showlegend=False,
-                title=dict(text=f"Dataset ({data['n_total']:,} pacientes)",font=dict(size=12)),
-                margin=dict(l=30,r=10,t=40,b=30),yaxis=dict(range=[0,max(counts)*1.25]))
+            layout_d = {**_LAYOUT, "margin": dict(l=30,r=10,t=40,b=30)}
+            fig_d.update_layout(**layout_d, height=240, showlegend=False,
+                title=dict(text=f"Dataset ({data['n_total']:,} pacientes)", font=dict(size=12)),
+                yaxis=dict(range=[0,max(counts)*1.25]))
             st.plotly_chart(fig_d, use_container_width=True)
 
     with tab_hist:
@@ -1331,7 +1334,7 @@ def page_nutricion():
             clases=[r["Clase"] for r in prof_rows]
             fig_kcal=_grouped_bar(clases,{
                 "Kcal/día":[r["Kcal/día×pac"] for r in prof_rows],
-            },"Calorías diarias por clase de riesgo (por paciente)","kcal",height=300)
+            },"Calorías diarias por clase de riesgo (por paciente)",height=300)
             st.plotly_chart(fig_kcal, use_container_width=True)
         with col_g2:
             fig_mac=_grouped_bar(clases,{
