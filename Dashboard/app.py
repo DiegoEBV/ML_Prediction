@@ -364,17 +364,24 @@ for key, val in [
         st.session_state[key] = val
 
 # ══════════════════════════════════════════════════════════════
-# GCS MODEL SYNC
+# GCS MODEL SYNC — hilo de fondo, no bloquea el arranque
 # ══════════════════════════════════════════════════════════════
-@st.cache_resource
 def _sync_models_from_gcs():
+    """Descarga PKLs desde GCS en segundo plano. Nunca crashea ni bloquea."""
     if not HAS_GCP:
         return []
-    try:
-        results = sync_models_from_gcs("models")
-        return results
-    except Exception:
-        return []
+    import threading
+    result = []
+    def _run():
+        try:
+            r = sync_models_from_gcs("models")
+            result.extend(r)
+        except Exception:
+            pass
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    t.join(timeout=8)   # máximo 8 segundos; si tarda más, continúa igual
+    return result
 
 
 # ══════════════════════════════════════════════════════════════
@@ -1723,10 +1730,12 @@ def page_trabajador():
 # ══════════════════════════════════════════════════════════════
 # ROUTER PRINCIPAL
 # ══════════════════════════════════════════════════════════════
-try:
-    _sync_models_from_gcs()
-except Exception:
-    pass
+if "gcs_synced" not in st.session_state:
+    st.session_state.gcs_synced = True
+    try:
+        _sync_models_from_gcs()
+    except Exception:
+        pass
 
 if st.session_state.vista == "landing":
     page_landing()
