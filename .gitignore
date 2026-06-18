@@ -15,6 +15,5 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Ignorar datasets extremadamente grandes (>100MB)
-data/favorita_aldimi_limpio.txt
-
+# Claude Code internal
+.claude/
