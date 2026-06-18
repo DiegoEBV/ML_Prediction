@@ -17,3 +17,7 @@ __pycache__/
 
 # Claude Code internal
 .claude/
+
+# Data folder (contains huge raw datasets)
+data/
+

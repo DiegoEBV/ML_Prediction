@@ -5,6 +5,10 @@ Vistas: Landing · Developer (Logistica / Salud) · Trabajador
 Ejecutar: streamlit run app.py
 """
 
+import os, sys, json, pickle, warnings
+from datetime import datetime
+from pathlib import Path
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -50,9 +54,9 @@ try:
         upload_silver_salud, upload_silver_logistica,
         upload_gold_salud, upload_gold_logistica,
         read_gold_salud, read_gold_logistica,
+        GCP_PROJECT, DATASET_ID, get_auth_method,
         upload_all_models, sync_models_from_gcs, list_models,
         GCS_BUCKET, GCS_PREFIX,
-        GCP_PROJECT, DATASET_ID
     )
     HAS_GCP = True
 except ImportError:
@@ -65,7 +69,7 @@ st.set_page_config(
     page_title="ALDIMI-PREDICT",
     page_icon="🏥",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 # ══════════════════════════════════════════════════════════════
@@ -146,6 +150,8 @@ section[data-testid="stSidebar"] .stRadio label:hover {
     background: rgba(255,255,255,0.15) !important;
     color: #ffffff !important;
 }
+
+/* Botones sidebar */
 section[data-testid="stSidebar"] .stButton > button {
     background: rgba(255,255,255,0.1) !important;
     color: #ffffff !important;
@@ -164,6 +170,7 @@ section[data-testid="stSidebar"] .stButton > button:hover {
 /* ══ MÉTRICAS ══ */
 [data-testid="stMetric"] {
     background: #ffffff !important;
+    border: none !important;
     border-radius: 14px !important;
     padding: 18px 20px !important;
     box-shadow: 0 1px 6px rgba(15,36,96,0.09) !important;
@@ -198,8 +205,9 @@ section[data-testid="stSidebar"] .stButton > button:hover {
     box-shadow: 0 5px 18px rgba(37,99,235,0.42) !important;
     transform: translateY(-1px) !important;
 }
+.stButton > button:active { transform: translateY(0) !important; }
 
-/* ══ TABS ══ */
+/* ══ TABS — fondo blanco, activo azul ══ */
 .stTabs [data-baseweb="tab-list"] {
     background: #ffffff !important;
     border-radius: 12px !important;
@@ -387,7 +395,7 @@ summary { font-weight: 600 !important; color: #374151 !important; }
 """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════
-# CONSTANTES
+# CONSTANTS
 # ══════════════════════════════════════════════════════════════
 CANCER_TYPES  = ["Breast","Cervical","Colon","Leukemia","Liver","Lung","Prostate","Skin"]
 CANCER_STAGES = ["Stage 0","Stage I","Stage II","Stage III","Stage IV"]
@@ -455,6 +463,7 @@ for _k, _v in [
 # ══════════════════════════════════════════════════════════════
 # GCS SYNC — hilo de fondo, 8s timeout
 # ══════════════════════════════════════════════════════════════
+@st.cache_resource
 def _sync_models_from_gcs():
     if not HAS_GCP:
         return
@@ -483,8 +492,8 @@ def retrain_salud() -> tuple[bool, str]:
     df, fuente = None, ""
     if HAS_GCP:
         try:
-            df_gcp, _ = read_gold_salud()
-            if df_gcp is not None and len(df_gcp) > 100 and TARGET_COL in df_gcp.columns:
+            df_gcp, msg = read_gold_salud()
+            if df_gcp is not None and len(df_gcp) > 100:
                 df = df_gcp; fuente = f"Gold BigQuery ({len(df):,} filas)"
         except Exception:
             pass
@@ -518,6 +527,7 @@ def retrain_salud() -> tuple[bool, str]:
     except Exception as e:
         return False, f"Error preparando features: {e}"
 
+    # 3. Entrenar
     scaler = StandardScaler()
     X_sc   = scaler.fit_transform(X)
     X_tr, X_te, y_tr, y_te = train_test_split(X_sc, y, test_size=0.3, random_state=42, stratify=y)
@@ -533,6 +543,7 @@ def retrain_salud() -> tuple[bool, str]:
                             eval_metric="mlogloss", random_state=42, verbosity=0)
         xgb.fit(X_tr, y_tr); trained["XGB"] = xgb
 
+    # 4. Guardar PKL
     os.makedirs("models", exist_ok=True)
     for path, obj in {
         "models/xgb_salud.pkl": trained.get("XGB"),
@@ -544,6 +555,7 @@ def retrain_salud() -> tuple[bool, str]:
         if obj is not None:
             with open(path, "wb") as f: pickle.dump(obj, f)
 
+    # 5. Subir a GCS
     gcs_msg = ""
     if HAS_GCP:
         try:
@@ -552,6 +564,7 @@ def retrain_salud() -> tuple[bool, str]:
         except Exception as e:
             gcs_msg = f" | GCS: {e}"
 
+    # 6. Limpiar cache
     load_and_train_salud.clear()
     best = max(trained, key=lambda k: accuracy_score(y_te, trained[k].predict(X_te)))
     acc  = accuracy_score(y_te, trained[best].predict(X_te))
@@ -559,13 +572,14 @@ def retrain_salud() -> tuple[bool, str]:
 
 
 def retrain_logistica() -> tuple[bool, str]:
+    """Lee Gold (BQ o CSV local), reentrena modelos de logística, guarda PKL y sube a GCS."""
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.preprocessing import LabelEncoder
 
     df, fuente = None, ""
     if HAS_GCP:
         try:
-            df_gcp, _ = read_gold_logistica()
+            df_gcp, msg = read_gold_logistica()
             if df_gcp is not None and len(df_gcp) > 100:
                 df = df_gcp; fuente = f"Gold BigQuery ({len(df):,} filas)"
         except Exception:
@@ -586,12 +600,12 @@ def retrain_logistica() -> tuple[bool, str]:
             df[col] = le.fit_transform(df[col].astype(str))
     if "date" in df.columns:
         df["date"] = pd.to_datetime(df["date"], errors="coerce")
-        df["dia_semana"]  = df["date"].dt.dayofweek
-        df["mes"]         = df["date"].dt.month
-        df["anio"]        = df["date"].dt.year
-        df["semana_anio"] = df["date"].dt.isocalendar().week.astype(int)
-        df["trimestre"]   = df["date"].dt.quarter
-        df["es_finde"]    = (df["dia_semana"] >= 5).astype(int)
+        df["dia_semana"]   = df["date"].dt.dayofweek
+        df["mes"]          = df["date"].dt.month
+        df["anio"]         = df["date"].dt.year
+        df["semana_anio"]  = df["date"].dt.isocalendar().week.astype(int)
+        df["trimestre"]    = df["date"].dt.quarter
+        df["es_finde"]     = (df["dia_semana"] >= 5).astype(int)
         df = df.drop(columns=["date"], errors="ignore")
     if "unit_sales" in df.columns:
         if "demand7"  not in df.columns:
@@ -601,6 +615,7 @@ def retrain_logistica() -> tuple[bool, str]:
         if "perecibilidad" not in df.columns and "perishable" in df.columns:
             df["perecibilidad"] = df["perishable"].astype(int)
 
+    # Features disponibles para entrenamiento
     avail = [c for c in FEATURES_LOG if c in df.columns]
     num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
     feature_cols = avail if avail else [c for c in num_cols if c not in ["demand7","demand14","perecibilidad","unit_sales"]]
@@ -613,8 +628,8 @@ def retrain_logistica() -> tuple[bool, str]:
 
     from sklearn.ensemble import RandomForestRegressor
     for target, fname_xgb, fname_rf in [
-        ("demand7",  "xgb_demand7.pkl",  "rf_demand7.pkl"),
-        ("demand14", "xgb_demand14.pkl", "rf_demand14.pkl"),
+        ("demand7",      "xgb_demand7.pkl",  "rf_demand7.pkl"),
+        ("demand14",     "xgb_demand14.pkl", "rf_demand14.pkl"),
     ]:
         if target not in df_model.columns:
             continue
@@ -632,15 +647,18 @@ def retrain_logistica() -> tuple[bool, str]:
         with open(os.path.join(MODELS_DIR, fname_rf), "wb") as f: pickle.dump(m_rf, f)
         trained.append(fname_rf)
 
-    if "perecibilidad" in df_model.columns and HAS_XGB:
+    # Perecibilidad (clasificación)
+    if "perecibilidad" in df_model.columns:
         X = df_model[feature_cols].values
         y = df_model["perecibilidad"].astype(int).values
         X_tr, _, y_tr, _ = train_test_split(X, y, test_size=0.2, random_state=42)
-        m = XGBClassifier(n_estimators=100, max_depth=5, random_state=42, verbosity=0)
-        m.fit(X_tr, y_tr)
-        with open(os.path.join(MODELS_DIR, "xgb_perece.pkl"), "wb") as f: pickle.dump(m, f)
-        trained.append("xgb_perece.pkl")
+        if HAS_XGB:
+            m = XGBClassifier(n_estimators=100, max_depth=5, random_state=42, verbosity=0)
+            m.fit(X_tr, y_tr)
+            with open(os.path.join(MODELS_DIR, "xgb_perece.pkl"), "wb") as f: pickle.dump(m, f)
+            trained.append("xgb_perece.pkl")
 
+    # Subir a GCS
     gcs_msg = ""
     if HAS_GCP:
         try:
@@ -760,8 +778,21 @@ def priority_info_salud(cls):
     return {0:("BAJO","bajo"), 1:("MEDIO","medio"), 2:("ALTO","alto")}.get(int(cls),("—","bajo"))
 
 
-def build_vector_log(inputs):
-    return np.array([[inputs.get(f, 0) for f in FEATURES_LOG]])
+def build_vector_salud(pd_dict, feature_cols):
+    row = {col: 0 for col in feature_cols}
+    for k in ["Age","Year","Genetic_Risk","Air_Pollution","Alcohol_Use",
+              "Smoking","Obesity_Level","Treatment_Cost_USD","Survival_Years"]:
+        if k in row: row[k] = pd_dict.get(k, 0)
+    if "Cancer_Stage" in row:
+        row["Cancer_Stage"] = STAGE_MAP.get(pd_dict.get("Cancer_Stage","Stage 0"), 1)
+    for prefix, key in [("Gender","Gender"),("Country_Region","Country_Region"),("Cancer_Type","Cancer_Type")]:
+        col = f"{prefix}_{pd_dict.get(key,'')}"
+        if col in row: row[col] = 1
+    return np.array([list(row.values())])
+
+
+def priority_info(cls):
+    return {0:("BAJO","bajo","#22c55e"), 1:("MEDIO","medio","#f59e0b"), 2:("ALTO","alto","#ef4444")}.get(int(cls), ("—","bajo","#64748b"))
 
 
 # ══════════════════════════════════════════════════════════════
@@ -884,6 +915,7 @@ def page_landing():
     st.sidebar.markdown("---")
     st.sidebar.caption("ML 1ACC0057 · UPC · GCP mlaldimi")
 
+    # ── Greeting header ──
     st.markdown("""
     <div class="landing-header">
         <h1>ALDIMI-PREDICT</h1>
@@ -906,7 +938,7 @@ def page_landing():
         if st.button("Ingresar como Developer", key="btn_dev", use_container_width=True):
             st.session_state.vista = "developer"; st.rerun()
 
-    with col_worker:
+    with col2:
         st.markdown("""
         <div class="module-card worker">
             <div style="font-size:2.6rem;">👩‍⚕️</div>
@@ -1125,6 +1157,8 @@ def _dev_logistica():
     with tab_data:
         st.markdown('<div class="dev-section-title">Ingreso Manual de Datos — Logística</div>', unsafe_allow_html=True)
 
+    # ── DATA ────────────────────────────────────────────────────
+    with t_data:
         with st.form("form_log_dev"):
             c1, c2, c3 = st.columns(3)
             with c1:
@@ -1419,9 +1453,10 @@ def _dev_salud():
             <b>Modelos que se generan:</b><br>
             · XGBoost → <code>xgb_salud.pkl</code><br>
             · Random Forest → <code>rf_salud.pkl</code><br>
-            · MLP → <code>mlp_salud.pkl</code><br>
-            · Scaler + features → <code>scaler_salud.pkl</code>, <code>feature_cols_salud.pkl</code>
-            </div>""", unsafe_allow_html=True)
+            · MLP (red neuronal) → <code>mlp_salud.pkl</code><br>
+            · Scaler + feature columns → <code>scaler_salud.pkl</code>, <code>feature_cols_salud.pkl</code>
+            </div>
+            """, unsafe_allow_html=True)
 
     # ── DATA ──────────────────────────────────────────────────
     with tab_data:
@@ -1440,7 +1475,7 @@ def _dev_salud():
             with cb:
                 if st.button("Enviar dataset a GCP Bronze", key="send_salud_gcp"):
                     if HAS_GCP:
-                        ok, msg = upload_bronze_salud(df_raw, source="full_dataset")
+                        ok, msg = upload_bronze_salud(df_sr, source="manual")
                         (st.success if ok else st.error)(msg)
                     else:
                         st.warning("GCP no disponible.")
@@ -1478,8 +1513,7 @@ def page_developer():
 # TRABAJADOR PAGE
 # ══════════════════════════════════════════════════════════════
 def page_trabajador():
-    data = load_and_train_salud()
-
+    # Minimal sidebar — navigation only
     with st.sidebar:
         st.markdown("## ALDIMI-PREDICT")
         st.markdown("**Vista Trabajador**")
@@ -1529,8 +1563,7 @@ def page_trabajador():
         "🔬 Clasificación Individual", "📋 Historial de Pacientes", "ℹ️ Info del Sistema"
     ])
 
-    with tab_cls:
-        col_result, col_input = st.columns([1, 1], gap="large")
+    data = load_and_train_salud()
 
         with col_result:
             st.markdown('<div class="section-title">Resultado de Clasificación</div>', unsafe_allow_html=True)
@@ -1659,6 +1692,16 @@ def page_trabajador():
                 file_name=f"historial_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
                 mime="text/csv", use_container_width=True
             )
+
+    # ──────────────────────────────────────────────────────────
+    # TAB 3 — HISTORIAL
+    # ──────────────────────────────────────────────────────────
+    with t_hist:
+        st.markdown("### 📋 Historial de Clasificaciones")
+
+        if not st.session_state.historial_worker:
+            st.markdown('<div class="alert alert-blue">Sin registros en esta sesión. Clasifica pacientes en la pestaña anterior.</div>',
+                        unsafe_allow_html=True)
         else:
             st.info("Aún no se han clasificado pacientes. Ve a Clasificación Individual.")
 
