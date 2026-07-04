@@ -51,7 +51,7 @@ st.set_page_config(
     page_title="ALDIMI-PREDICT",
     page_icon="🏥",
     layout="wide",
-    initial_sidebar_state="auto",
+    initial_sidebar_state="collapsed",
 )
 
 # ─────────────────────────────────────────────────────────────
@@ -71,10 +71,13 @@ st.markdown("""
 header{background:transparent!important;box-shadow:none!important;}
 
 /* ── fondo ── */
-.stApp,[data-testid="stAppViewContainer"],[data-testid="stAppViewContainer"]>.main,.main{
-    background:#f1f5f9!important;}
-.main .block-container{
-    padding:2rem 2.2rem 3rem!important;max-width:1500px!important;background:transparent!important;}
+.stApp,[data-testid="stAppViewContainer"]{
+    background:
+        radial-gradient(circle at 0% 0%, rgba(37,99,235,.05), transparent 40%),
+        radial-gradient(circle at 100% 0%, rgba(124,58,237,.045), transparent 40%),
+        #f1f5f9!important;}
+.block-container{
+    padding:2rem 2.4rem 3rem!important;max-width:1500px!important;background:transparent!important;}
 
 /* ── sidebar ── */
 section[data-testid="stSidebar"],
@@ -143,12 +146,16 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p{
 
 /* ── metrics ── */
 [data-testid="stMetric"]{
-    background:#fff!important;border-radius:14px!important;padding:16px 18px!important;
-    box-shadow:0 1px 6px rgba(15,36,96,.09)!important;border-left:4px solid #2563eb!important;}
+    background:#fff!important;border-radius:16px!important;padding:18px 20px!important;
+    box-shadow:0 2px 10px rgba(15,36,96,.07)!important;border:1px solid #eef2f7!important;
+    border-top:3px solid #2563eb!important;transition:all .18s!important;}
+[data-testid="stMetric"]:hover{
+    box-shadow:0 10px 26px rgba(15,36,96,.14)!important;transform:translateY(-2px)!important;}
 [data-testid="stMetricLabel"]{
-    font-size:.69rem!important;color:#64748b!important;
-    font-weight:700!important;text-transform:uppercase!important;letter-spacing:.5px!important;}
-[data-testid="stMetricValue"]{font-size:1.5rem!important;font-weight:800!important;color:#0f172a!important;}
+    font-size:.68rem!important;color:#94a3b8!important;
+    font-weight:800!important;text-transform:uppercase!important;letter-spacing:.6px!important;}
+[data-testid="stMetricValue"]{font-size:1.6rem!important;font-weight:800!important;color:#0f172a!important;}
+[data-testid="stMetricDeltaIcon-Up"] svg, [data-testid="stMetricDeltaIcon-Down"] svg{margin-right:2px;}
 
 /* ── buttons ── */
 .stButton>button{
@@ -162,12 +169,12 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p{
 
 /* ── tabs ── */
 .stTabs [data-baseweb="tab-list"]{
-    background:#fff!important;border-radius:12px!important;padding:5px!important;
-    gap:3px!important;box-shadow:0 1px 4px rgba(0,0,0,.07)!important;
-    border:1px solid #e2e8f0!important;margin-bottom:6px!important;}
+    background:#fff!important;border-radius:14px!important;padding:6px!important;
+    gap:4px!important;box-shadow:0 2px 8px rgba(15,36,96,.06)!important;
+    border:1px solid #e2e8f0!important;margin-bottom:8px!important;}
 .stTabs [data-baseweb="tab"]{
-    background:transparent!important;border-radius:9px!important;padding:9px 16px!important;
-    font-weight:500!important;color:#64748b!important;font-size:.83rem!important;
+    background:transparent!important;border-radius:10px!important;padding:9px 16px!important;
+    font-weight:600!important;color:#64748b!important;font-size:.83rem!important;
     border:none!important;transition:all .15s!important;}
 .stTabs [data-baseweb="tab"]:hover{background:#f1f5f9!important;color:#374151!important;}
 .stTabs [aria-selected="true"]{
@@ -223,21 +230,32 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p{
     filter:brightness(1.12)!important;}
 
 /* ── page header ── */
-.page-header{border-radius:16px;padding:20px 26px;margin-bottom:22px;box-shadow:0 4px 14px rgba(0,0,0,.15);}
+.page-header{
+    border-radius:18px;padding:24px 30px;margin-bottom:24px;
+    box-shadow:0 10px 28px rgba(0,0,0,.16);position:relative;overflow:hidden;}
+.page-header::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(circle at 100% 0%, rgba(255,255,255,.16), transparent 55%);}
 .page-header.logistica{background:linear-gradient(135deg,#0c4a6e,#0369a1);}
 .page-header.salud    {background:linear-gradient(135deg,#3b0764,#7c3aed);}
 .page-header.worker   {background:linear-gradient(135deg,#2e1065,#6d28d9);}
 .page-header.nutricion{background:linear-gradient(135deg,#042f2e,#0d9488);}
-.page-header h1{font-size:1.55rem!important;font-weight:800!important;color:#fff!important;margin:0 0 4px!important;}
-.page-header p{font-size:.83rem;color:rgba(255,255,255,.75);margin:0;}
+.page-header h1{font-size:1.6rem!important;font-weight:800!important;color:#fff!important;
+    margin:0 0 5px!important;position:relative;z-index:1;letter-spacing:-.3px!important;}
+.page-header p{font-size:.85rem;color:rgba(255,255,255,.8);margin:0;position:relative;z-index:1;}
 
 /* ── section titles ── */
 .section-title{
-    font-size:1rem;font-weight:700;color:#1e3a8a;
-    padding:5px 0 9px;border-bottom:2px solid #dbeafe;margin-bottom:12px;}
+    font-size:1.02rem;font-weight:800;color:#1e3a8a;
+    padding:6px 0 10px 14px;border-bottom:2px solid #dbeafe;margin-bottom:14px;position:relative;}
+.section-title::before{
+    content:"";position:absolute;left:0;top:7px;bottom:11px;width:4px;border-radius:4px;background:#2563eb;}
 .section-title.salud  {color:#5b21b6;border-bottom-color:#ddd6fe;}
+.section-title.salud::before{background:#7c3aed;}
 .section-title.teal   {color:#0f766e;border-bottom-color:#99f6e4;}
+.section-title.teal::before{background:#0d9488;}
 .section-title.gray   {color:#374151;border-bottom-color:#e5e7eb;}
+.section-title.gray::before{background:#64748b;}
 
 /* ── alert boxes ── */
 .alert-box{border-radius:10px;padding:12px 15px;margin:8px 0;font-size:.84rem;font-weight:500;line-height:1.55;}
@@ -250,7 +268,9 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p{
 .alert-purple{background:#faf5ff;border-left:4px solid #7c3aed;color:#3b0764;}
 
 /* ── KPI rows ── */
-.kpi-row{margin:5px 0;padding:10px 14px;background:#f8fafc;border-radius:9px;font-size:.87rem;}
+.kpi-row{margin:6px 0;padding:12px 16px;background:#fff;border-radius:12px;font-size:.87rem;
+    box-shadow:0 1px 4px rgba(15,36,96,.05);transition:all .15s;}
+.kpi-row:hover{box-shadow:0 6px 16px rgba(15,36,96,.1);transform:translateX(2px);}
 
 /* ── result cards (trabajador) ── */
 .result-card{border-radius:16px;padding:26px 22px;text-align:center;margin:8px 0 14px;
