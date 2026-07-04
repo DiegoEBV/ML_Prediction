@@ -255,6 +255,18 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p{
 </style>
 """, unsafe_allow_html=True)
 
+# Selecciona automáticamente el valor de los campos numéricos al enfocarlos,
+# para poder escribir el nuevo número de una sola vez sin borrar el anterior.
+st.components.v1.html("""
+<script>
+window.parent.document.addEventListener("focusin", function(e) {
+    if (e.target && e.target.tagName === "INPUT" && e.target.type === "number") {
+        e.target.select();
+    }
+});
+</script>
+""", height=0)
+
 # ─────────────────────────────────────────────────────────────
 # CONSTANTES
 # ─────────────────────────────────────────────────────────────
