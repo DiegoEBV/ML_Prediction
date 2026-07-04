@@ -171,31 +171,52 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p{
     box-shadow:0 2px 8px rgba(29,78,216,.35)!important;font-weight:700!important;}
 
 /* ── landing ── */
-.landing-bg{
-    background:linear-gradient(135deg,#0c1a4e 0%,#1e3a8a 45%,#1d4ed8 100%);
-    border-radius:20px;padding:52px 32px 42px;text-align:center;
-    margin-bottom:32px;box-shadow:0 8px 32px rgba(12,26,78,.32);}
+.block-container:has(.landing-wrap){
+    max-width:980px!important;padding-top:6vh!important;
+    margin-left:auto!important;margin-right:auto!important;}
+
+.landing-wrap{margin-bottom:8px;}
+.landing-eyebrow{
+    display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:1.3px;
+    text-transform:uppercase;color:#2563eb;background:#eff6ff;
+    padding:6px 16px;border-radius:20px;margin-bottom:18px;}
 .landing-title{
-    font-size:2.9rem!important;font-weight:900!important;color:#fff!important;
-    margin:0 0 10px!important;letter-spacing:-1.5px!important;}
-.landing-sub{font-size:1rem;color:#93c5fd;margin:4px 0;}
-.landing-caption{font-size:.8rem;color:#60a5fa;margin-top:12px;}
+    font-size:2.3rem!important;font-weight:900!important;color:#0f172a!important;
+    margin:0 0 10px!important;letter-spacing:-1px!important;}
+.landing-sub{font-size:1rem;color:#64748b;margin:0 0 8px;line-height:1.5;}
 
 .view-card{
-    background:#fff;border-radius:18px;padding:34px 24px;text-align:center;
-    box-shadow:0 2px 10px rgba(15,36,96,.09);transition:all .2s;
-    margin-bottom:14px;cursor:pointer;}
-.view-card:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(15,36,96,.18);}
-.view-card.developer{border-top:5px solid #0369a1;}
-.view-card.usuario  {border-top:5px solid #6d28d9;}
-.view-icon{font-size:2.6rem;margin-bottom:10px;}
-.view-card h2{font-size:1.2rem;font-weight:800;color:#0f172a;margin:0 0 8px;}
-.view-card p{font-size:.83rem;color:#64748b;margin:0;line-height:1.6;}
-.view-card .sub{font-size:.76rem;color:#94a3b8;margin-top:6px;}
+    background:#fff;border-radius:20px;padding:32px 26px 26px;text-align:center;
+    box-shadow:0 2px 14px rgba(15,36,96,.08);transition:all .22s;
+    border:1px solid #eef2f7;height:100%;}
+.view-card:hover{transform:translateY(-5px);box-shadow:0 16px 36px rgba(15,36,96,.16);
+    border-color:transparent;}
+.view-icon-wrap{
+    width:64px;height:64px;border-radius:18px;display:flex;align-items:center;
+    justify-content:center;margin:0 auto 16px;font-size:1.9rem;}
+.view-card.developer .view-icon-wrap{background:linear-gradient(135deg,#e0f2fe,#bae6fd);}
+.view-card.usuario   .view-icon-wrap{background:linear-gradient(135deg,#f3e8ff,#e9d5ff);}
+.view-card h2{font-size:1.25rem;font-weight:800;color:#0f172a;margin:0 0 10px;}
+.view-card p{font-size:.85rem;color:#64748b;margin:0;line-height:1.6;}
+.view-card .sub{font-size:.77rem;color:#94a3b8;margin-top:8px;}
 
-.badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:.74rem;font-weight:700;margin-top:12px;}
+.badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:.74rem;font-weight:700;margin-top:14px;}
 .badge-developer{background:#e0f2fe;color:#0369a1;}
 .badge-usuario  {background:#f3e8ff;color:#6d28d9;}
+
+/* botones "Abrir" pegados a su tarjeta, con color por módulo */
+[data-testid="stHorizontalBlock"]:has(.view-card) [data-testid="stButton"]{
+    margin-top:-16px!important;}
+[data-testid="stHorizontalBlock"]:has(.view-card) [data-testid="stColumn"]:nth-of-type(1) .stButton>button{
+    background:linear-gradient(135deg,#0369a1,#0c4a6e)!important;border:none!important;
+    border-radius:0 0 16px 16px!important;font-weight:700!important;padding:12px!important;
+    box-shadow:none!important;transition:all .18s!important;}
+[data-testid="stHorizontalBlock"]:has(.view-card) [data-testid="stColumn"]:nth-of-type(2) .stButton>button{
+    background:linear-gradient(135deg,#6d28d9,#4c1d95)!important;border:none!important;
+    border-radius:0 0 16px 16px!important;font-weight:700!important;padding:12px!important;
+    box-shadow:none!important;transition:all .18s!important;}
+[data-testid="stHorizontalBlock"]:has(.view-card) .stButton>button:hover{
+    filter:brightness(1.12)!important;}
 
 /* ── page header ── */
 .page-header{border-radius:16px;padding:20px 26px;margin-bottom:22px;box-shadow:0 4px 14px rgba(0,0,0,.15);}
@@ -743,6 +764,14 @@ def page_landing():
     st.sidebar.markdown("---")
     st.sidebar.caption("ML 1ACC0057 · UPC · GCP mlaldimi")
 
+    st.markdown("""
+    <div class="landing-wrap">
+        <span class="landing-eyebrow">ML 1ACC0057 · UPC · GCP mlaldimi</span>
+        <h1 class="landing-title">¿Qué vista deseas abrir?</h1>
+        <p class="landing-sub">Elige el módulo según tu rol dentro de ALDIMI-PREDICT.</p>
+    </div>""", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+
     c1,c2 = st.columns(2, gap="large")
     views = [
         (c1,"developer","🛠️","Developer",
@@ -756,13 +785,13 @@ def page_landing():
         with col:
             st.markdown(f"""
             <div class="view-card {css}">
-                <div class="view-icon">{icon}</div>
+                <div class="view-icon-wrap">{icon}</div>
                 <h2>{title}</h2>
                 <p>{desc}</p>
                 <p class="sub">{sub}</p>
                 <span class="badge {badge_css}">{badge_txt}</span>
             </div>""", unsafe_allow_html=True)
-            if st.button(f"Abrir", key=f"btn_{vista}", use_container_width=True):
+            if st.button("Abrir →", key=f"btn_{vista}", use_container_width=True):
                 st.session_state.vista=vista; st.rerun()
 
 
