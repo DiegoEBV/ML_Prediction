@@ -779,336 +779,349 @@ def page_landing():
 # ─────────────────────────────────────────────────────────────
 # DEVELOPER (Logística + Salud)
 # ─────────────────────────────────────────────────────────────
+def _render_developer_logistica():
+    st.markdown("""
+    <div class="page-header logistica">
+        <h1>📦 Developer — Logística</h1>
+        <p>KPI de producción · Comparación de modelos · Exportación · Reentrenamiento · Datos Bronze</p>
+    </div>""", unsafe_allow_html=True)
+
+    tab_kpi,tab_cmp,tab_exp,tab_ret,tab_dat = st.tabs([
+        "📊 KPI","🔬 Comparación","📁 Exportar","🔄 Reentrenar","✏️ Datos",
+    ])
+
+    # KPI ──────────────────────────────────────────────────────
+    with tab_kpi:
+        st.markdown('<div class="section-title">KPIs de Producción</div>', unsafe_allow_html=True)
+        d7  = min((r for r in METRICAS_REG if r["Target"]=="demand7"), key=lambda x:x["WAPE%"])
+        d14 = min((r for r in METRICAS_REG if r["Target"]=="demand14"),key=lambda x:x["WAPE%"])
+        c1,c2,c3,c4,c5 = st.columns(5)
+        c1.metric("Mejor demand7",  d7["Modelo"])
+        c2.metric("WAPE% demand7",  f"{d7['WAPE%']:.2f}%",  "Objetivo <20%")
+        c3.metric("R² demand7",     f"{d7['R2']:.4f}",      "Objetivo >0.91")
+        c4.metric("WAPE% demand14", f"{d14['WAPE%']:.2f}%", "Objetivo <20%")
+        c5.metric("Acc. perecibilidad", "100%", "Objetivo >95%")
+        st.markdown("<br>", unsafe_allow_html=True)
+        ca,cb = st.columns(2)
+        for col,target in [(ca,"demand7"),(cb,"demand14")]:
+            with col:
+                st.markdown(f'<div class="section-title">Cumplimiento — {target}</div>', unsafe_allow_html=True)
+                for r in (x for x in METRICAS_REG if x["Target"]==target):
+                    ok = r["WAPE%"]<20; c=("#22c55e" if ok else "#ef4444"); ic=("✓" if ok else "✗")
+                    st.markdown(
+                        f'<div class="kpi-row" style="border-left:4px solid {c};">'
+                        f'<b>{r["Modelo"]}</b>: WAPE={r["WAPE%"]}% · R²={r["R2"]} · MAE={r["MAE"]}'
+                        f'<span style="color:{c};font-weight:800;float:right;">{ic}</span></div>',
+                        unsafe_allow_html=True)
+
+    # COMPARACIÓN ──────────────────────────────────────────────
+    with tab_cmp:
+        st.markdown('<div class="section-title">Comparación de Modelos — Regresión de Demanda</div>', unsafe_allow_html=True)
+        st.markdown('<div class="alert-box alert-teal">XGBoost lidera en WAPE% para ambos horizontes. Todos superan R²=0.91 — objetivo cumplido.</div>', unsafe_allow_html=True)
+
+        df_reg = pd.DataFrame(METRICAS_REG)
+        st.dataframe(df_reg, use_container_width=True, hide_index=True)
+
+        s7  = df_reg[df_reg["Target"]=="demand7"]
+        s14 = df_reg[df_reg["Target"]=="demand14"]
+
+        col1,col2 = st.columns(2)
+        with col1:
+            st.plotly_chart(_bar(s7["Modelo"].tolist(), s7["WAPE%"].tolist(),
+                "WAPE% — demand7 (↓ mejor)","WAPE%",MODEL_COLORS,hline=20,hline_label="Objetivo 20%"),
+                use_container_width=True)
+        with col2:
+            st.plotly_chart(_bar(s14["Modelo"].tolist(), s14["R2"].tolist(),
+                "R² — demand14 (↑ mejor)","R²",MODEL_COLORS,hline=0.91,hline_label="Objetivo 0.91"),
+                use_container_width=True)
+
+        col3,col4 = st.columns(2)
+        with col3:
+            st.plotly_chart(_bar(s7["Modelo"].tolist(), s7["MAE"].tolist(),
+                "MAE — demand7","MAE",MODEL_COLORS), use_container_width=True)
+        with col4:
+            st.plotly_chart(_bar(s14["Modelo"].tolist(), s14["RMSE"].tolist(),
+                "RMSE — demand14","RMSE",MODEL_COLORS), use_container_width=True)
+
+        st.markdown("---")
+        st.markdown('<div class="section-title">Clasificación de Perecibilidad</div>', unsafe_allow_html=True)
+        st.dataframe(pd.DataFrame(METRICAS_CLS_LOG), use_container_width=True, hide_index=True)
+        st.markdown('<div class="alert-box alert-teal">Todos los modelos alcanzan Accuracy=1.00 y AUC=1.00. Modelo en producción: XGBoost (xgb_perece.pkl).</div>', unsafe_allow_html=True)
+
+    # EXPORTAR ─────────────────────────────────────────────────
+    with tab_exp:
+        st.markdown('<div class="section-title">Exportar KPI — Logística</div>', unsafe_allow_html=True)
+        kpi = generate_kpi_logistica()
+        ca,cb = st.columns(2)
+        with ca:
+            kpi_json = json.dumps(kpi, indent=2, ensure_ascii=False)
+            st.download_button("⬇ KPI JSON", data=kpi_json.encode(),
+                file_name=f"kpi_logistica_{datetime.now().strftime('%Y%m%d_%H%M')}.json",
+                mime="application/json", use_container_width=True)
+            st.code(kpi_json[:500]+"\n...", language="json")
+        with cb:
+            rows=[{"modulo":"Logistica","target":t,"mejor_modelo":v["mejor_modelo"],
+                   "WAPE_pct":v["WAPE_pct"],"R2":v["R2"],"cumple":v["cumple"],
+                   "generado":kpi["generado"]} for t,v in kpi["kpis_regresion"].items()]
+            df_k=pd.DataFrame(rows)
+            st.download_button("⬇ KPI CSV", data=df_k.to_csv(index=False).encode(),
+                file_name=f"kpi_logistica_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+                mime="text/csv", use_container_width=True)
+            st.dataframe(df_k, use_container_width=True, hide_index=True)
+
+    # REENTRENAR ───────────────────────────────────────────────
+    with tab_ret:
+        st.markdown('<div class="section-title">Reentrenar Modelos</div>', unsafe_allow_html=True)
+        st.markdown('<div class="alert-box alert-blue"><b>Flujo:</b> Gold BigQuery → feature engineering → XGBoost + RF → PKL → GCS → recarga</div>', unsafe_allow_html=True)
+        cb,ci = st.columns([1,2])
+        with cb:
+            if st.button("🔄 Reentrenar ahora", key="ret_log", use_container_width=True):
+                with st.spinner("Entrenando modelos de logística... (2-5 min)"):
+                    ok,msg = retrain_logistica()
+                (st.success if ok else st.error)(msg)
+        with ci:
+            st.markdown('<div class="alert-box alert-gray"><b>Genera:</b> xgb_demand7.pkl · xgb_demand14.pkl · rf_demand7.pkl · rf_demand14.pkl · xgb_perece.pkl</div>', unsafe_allow_html=True)
+
+    # DATOS ────────────────────────────────────────────────────
+    with tab_dat:
+        st.markdown('<div class="section-title">Ingreso Manual de Datos</div>', unsafe_allow_html=True)
+        with st.form("form_log"):
+            c1,c2,c3 = st.columns(3)
+            with c1:
+                fecha=st.date_input("Fecha",value=datetime.now())
+                familia=st.selectbox("Familia",FAMILIES)
+                ciudad=st.selectbox("Ciudad",CITIES)
+            with c2:
+                tienda=st.number_input("N° tienda",1,54,5)
+                tipo=st.selectbox("Tipo tienda",["A","B","C","D","E"])
+                ventas=st.number_input("Ventas (uds)",0.0,500.0,10.0,step=0.5)
+            with c3:
+                onpromo=st.checkbox("En promoción")
+                oil=st.number_input("Precio petróleo (USD)",20.0,120.0,52.0,step=0.5)
+                trans=st.number_input("Transacciones",0,10000,500)
+            if st.form_submit_button("Registrar"):
+                st.session_state.historial_dev_log.append({
+                    "date":str(fecha),"store_nbr":tienda,"family":familia,"unit_sales":ventas,
+                    "onpromotion":onpromo,"city":ciudad,"state":"—","store_type":tipo,
+                    "cluster":5,"dcoilwtico":oil,"holiday_type":"Normal","transferred":False,"n_transactions":trans,
+                })
+                st.success(f"Registro guardado: {familia} | {ciudad} | {ventas} uds")
+
+        if st.session_state.historial_dev_log:
+            df_h=pd.DataFrame(st.session_state.historial_dev_log)
+            st.dataframe(df_h, use_container_width=True, hide_index=True)
+            ca,cb=st.columns(2)
+            with ca:
+                st.download_button("⬇ Exportar CSV",data=df_h.to_csv(index=False).encode(),
+                    file_name=f"log_manual_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+                    mime="text/csv",use_container_width=True)
+            with cb:
+                if st.button("Enviar a GCP Bronze",key="send_log_gcp",use_container_width=True):
+                    if HAS_GCP:
+                        ok,msg=upload_bronze_logistica(df_h,source="manual_dev"); (st.success if ok else st.error)(msg)
+                    else: st.warning("GCP no disponible.")
+
+        st.markdown("---")
+        st.markdown('<div class="section-title">Carga masiva CSV</div>', unsafe_allow_html=True)
+        up=st.file_uploader("Subir CSV de logística (Bronze)",type=["csv","txt"],key="uplog")
+        if up:
+            try:
+                st.dataframe(pd.read_csv(up,nrows=5),use_container_width=True,hide_index=True)
+                if st.button("Subir a GCP Bronze (chunked)",key="uplog_gcp",use_container_width=True):
+                    if HAS_GCP:
+                        up.seek(0); total=0
+                        for chunk in pd.read_csv(up,chunksize=50_000):
+                            ok,msg=upload_bronze_logistica(chunk,source=up.name)
+                            if not ok: st.error(msg); break
+                            total+=len(chunk)
+                        st.success(f"{total:,} filas subidas a Bronze (logística).")
+                    else: st.warning("GCP no disponible.")
+            except Exception as e: st.error(f"Error: {e}")
+
+
+def _render_developer_salud():
+    st.markdown("""
+    <div class="page-header salud">
+        <h1>🏥 Developer — Salud Oncológica</h1>
+        <p>KPI de producción · Comparación de modelos · Exportación · Reentrenamiento · Datos Bronze</p>
+    </div>""", unsafe_allow_html=True)
+
+    data = load_and_train_salud()
+
+    tab_kpi,tab_cmp,tab_exp,tab_ret,tab_dat = st.tabs([
+        "📊 KPI","🔬 Comparación","📁 Exportar","🔄 Reentrenar","✏️ Datos",
+    ])
+
+    # KPI ──────────────────────────────────────────────────────
+    with tab_kpi:
+        st.markdown('<div class="section-title salud">KPIs de Producción</div>', unsafe_allow_html=True)
+        if data:
+            bn,bd=max(data["results"].items(),
+                key=lambda kv:metricas_salud(data["y_test"],kv[1]["y_pred"],kv[1]["y_prob"])["auc_macro"])
+            m=metricas_salud(data["y_test"],bd["y_pred"],bd["y_prob"])
+            c1,c2,c3,c4,c5=st.columns(5)
+            c1.metric("Mejor modelo",  bn)
+            c2.metric("Accuracy",     f"{m['accuracy']:.4f}",  "Objetivo >0.85")
+            c3.metric("AUC Macro",    f"{m['auc_macro']:.4f}", "Objetivo >0.85")
+            c4.metric("Recall ALTO",  f"{m['recall_alto']:.4f}","Clase crítica")
+            c5.metric("F1 Macro",     f"{m['f1_macro']:.4f}",  "Objetivo >0.85")
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown('<div class="section-title salud">Cumplimiento por Modelo</div>', unsafe_allow_html=True)
+            for nm,res in data["results"].items():
+                mi=metricas_salud(data["y_test"],res["y_pred"],res["y_prob"])
+                ok_a=mi["accuracy"]>=0.85; ok_u=mi["auc_macro"]>=0.85; ok_r=mi["recall_alto"]>=0.85
+                c="#22c55e" if (ok_a and ok_u and ok_r) else "#f59e0b"
+                st.markdown(
+                    f'<div class="kpi-row" style="border-left:5px solid {c};">'
+                    f'<b>{nm}</b> · Acc={mi["accuracy"]:.4f}{"✓" if ok_a else "✗"}'
+                    f' · AUC={mi["auc_macro"]:.4f}{"✓" if ok_u else "✗"}'
+                    f' · Recall Alto={mi["recall_alto"]:.4f}{"✓" if ok_r else "✗"}'
+                    f'</div>', unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="alert-box alert-warning">Dataset no disponible. Coloca el CSV en <code>data/global_cancer_patients_2015_2024.csv</code></div>', unsafe_allow_html=True)
+            st.dataframe(pd.DataFrame(METRICAS_SALUD), use_container_width=True, hide_index=True)
+
+    # COMPARACIÓN ──────────────────────────────────────────────
+    with tab_cmp:
+        st.markdown('<div class="section-title salud">Comparación de Modelos — Salud Oncológica</div>', unsafe_allow_html=True)
+        if data:
+            rows=[]
+            for nm,res in data["results"].items():
+                mi=metricas_salud(data["y_test"],res["y_pred"],res["y_prob"])
+                rows.append({"Modelo":nm,"Accuracy":round(mi["accuracy"],4),
+                             "F1 Macro":round(mi["f1_macro"],4),"AUC Macro":round(mi["auc_macro"],4),
+                             "Recall Bajo":round(mi["rec"][0],4) if len(mi["rec"])>0 else 0,
+                             "Recall Medio":round(mi["rec"][1],4) if len(mi["rec"])>1 else 0,
+                             "Recall Alto":round(mi["recall_alto"],4)})
+            comp=pd.DataFrame(rows)
+        else:
+            comp=pd.DataFrame(METRICAS_SALUD)
+        st.dataframe(comp, use_container_width=True, hide_index=True)
+
+        col1,col2=st.columns(2)
+        with col1:
+            mods=comp["Modelo"].tolist()
+            fig_glob=_grouped_bar(mods,{
+                "Accuracy":  comp["Accuracy"].tolist() if "Accuracy" in comp else comp.get("Accuracy",[]),
+                "AUC Macro": comp["AUC Macro"].tolist() if "AUC Macro" in comp else comp.get("AUC_Macro",[]),
+                "F1 Macro":  comp["F1 Macro"].tolist()  if "F1 Macro"  in comp else comp.get("F1_Macro", []),
+            },"Métricas Globales",hline=0.85,hline_label="Umbral 0.85")
+            st.plotly_chart(fig_glob, use_container_width=True)
+        with col2:
+            rb = comp["Recall Bajo"].tolist()  if "Recall Bajo"  in comp else [0.97]*len(comp)
+            rm = comp["Recall Medio"].tolist() if "Recall Medio" in comp else [0.98]*len(comp)
+            ra = comp["Recall Alto"].tolist()  if "Recall Alto"  in comp else comp.get("Recall_Alto",[0.97]*len(comp))
+            fig_rec=_grouped_bar(CLASE_LABELS,{
+                nm:[rb[i],rm[i],ra[i]] for i,nm in enumerate(comp["Modelo"].tolist())
+            },"Recall por Clase",hline=0.85)
+            st.plotly_chart(fig_rec, use_container_width=True)
+
+        if data:
+            st.markdown("---")
+            ca,cb=st.columns(2)
+            best_nm=comp.loc[comp["AUC Macro"].idxmax(),"Modelo"] if "AUC Macro" in comp else comp.loc[comp["AUC_Macro"].idxmax(),"Modelo"]
+            best_res=data["results"][best_nm]
+            with ca:
+                st.markdown(f'<div class="section-title salud">Matriz de Confusión — {best_nm}</div>', unsafe_allow_html=True)
+                cm=confusion_matrix(data["y_test"],best_res["y_pred"])
+                st.plotly_chart(_heatmap(cm.tolist(),CLASE_LABELS,CLASE_LABELS), use_container_width=True)
+            with cb:
+                st.markdown(f'<div class="section-title salud">Reporte — {best_nm}</div>', unsafe_allow_html=True)
+                rep=classification_report(data["y_test"],best_res["y_pred"],
+                    target_names=CLASE_LABELS,output_dict=True,zero_division=0)
+                df_rep=pd.DataFrame(rep).T.round(4).drop(index=["accuracy"],errors="ignore")
+                st.dataframe(df_rep.style.background_gradient(cmap="Purples",
+                    subset=["precision","recall","f1-score"]), use_container_width=True)
+
+    # EXPORTAR ─────────────────────────────────────────────────
+    with tab_exp:
+        st.markdown('<div class="section-title salud">Exportar KPI — Salud</div>', unsafe_allow_html=True)
+        kpi=generate_kpi_salud(data)
+        ca,cb=st.columns(2)
+        with ca:
+            kpi_json=json.dumps(kpi,indent=2,ensure_ascii=False)
+            st.download_button("⬇ KPI JSON",data=kpi_json.encode(),
+                file_name=f"kpi_salud_{datetime.now().strftime('%Y%m%d_%H%M')}.json",
+                mime="application/json",use_container_width=True)
+            st.code(kpi_json[:500]+"\n...",language="json")
+        with cb:
+            os.makedirs("kpi_exports",exist_ok=True)
+            p=f"kpi_exports/kpi_salud_{datetime.now().strftime('%Y%m%d')}.json"
+            with open(p,"w",encoding="utf-8") as f: json.dump(kpi,f,indent=2,ensure_ascii=False)
+            st.markdown(f'<div class="alert-box alert-teal">Guardado en: <code>{p}</code></div>', unsafe_allow_html=True)
+            if data:
+                rows=[{"modelo":nm,"accuracy":round(metricas_salud(data["y_test"],r["y_pred"],r["y_prob"])["accuracy"],4),
+                       "auc_macro":round(metricas_salud(data["y_test"],r["y_pred"],r["y_prob"])["auc_macro"],4),
+                       "recall_alto":round(metricas_salud(data["y_test"],r["y_pred"],r["y_prob"])["recall_alto"],4)}
+                      for nm,r in data["results"].items()]
+                df_kc=pd.DataFrame(rows)
+                st.download_button("⬇ KPI CSV",data=df_kc.to_csv(index=False).encode(),
+                    file_name=f"kpi_salud_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+                    mime="text/csv",use_container_width=True)
+                st.dataframe(df_kc,use_container_width=True,hide_index=True)
+
+    # REENTRENAR ───────────────────────────────────────────────
+    with tab_ret:
+        st.markdown('<div class="section-title salud">Reentrenar Modelos</div>', unsafe_allow_html=True)
+        st.markdown('<div class="alert-box alert-purple"><b>Flujo:</b> Gold BigQuery → feature engineering → XGBoost + RF + MLP → PKL → GCS → recarga</div>', unsafe_allow_html=True)
+        cb,ci=st.columns([1,2])
+        with cb:
+            if st.button("🔄 Reentrenar ahora",key="ret_sal",use_container_width=True):
+                with st.spinner("Entrenando modelos de salud... (2-5 min)"):
+                    ok,msg=retrain_salud()
+                (st.success if ok else st.error)(msg)
+        with ci:
+            st.markdown('<div class="alert-box alert-gray"><b>Genera:</b> xgb_salud.pkl · rf_salud.pkl · mlp_salud.pkl · scaler_salud.pkl · feature_cols_salud.pkl</div>', unsafe_allow_html=True)
+
+    # DATOS ────────────────────────────────────────────────────
+    with tab_dat:
+        st.markdown('<div class="section-title salud">Dataset de Salud</div>', unsafe_allow_html=True)
+        if data and data.get("df_raw") is not None:
+            df_raw=data["df_raw"]
+            st.markdown(f"Dataset cargado: **{len(df_raw):,} pacientes**")
+            st.dataframe(df_raw.head(10), use_container_width=True)
+            ca,cb=st.columns(2)
+            with ca:
+                st.download_button("⬇ Exportar CSV",data=df_raw.to_csv(index=False).encode(),
+                    file_name=f"salud_{datetime.now().strftime('%Y%m%d')}.csv",
+                    mime="text/csv",use_container_width=True)
+            with cb:
+                if st.button("Enviar a GCP Bronze",key="send_sal_gcp",use_container_width=True):
+                    if HAS_GCP:
+                        ok,msg=upload_bronze_salud(df_raw,source="full_dataset"); (st.success if ok else st.error)(msg)
+                    else: st.warning("GCP no disponible.")
+        else:
+            st.markdown('<div class="alert-box alert-warning">Dataset no encontrado. Sube el CSV aquí.</div>', unsafe_allow_html=True)
+            up=st.file_uploader("Subir dataset de salud (CSV)",type=["csv","txt"],key="up_sal")
+            if up:
+                try: st.dataframe(pd.read_csv(up,nrows=100),use_container_width=True,hide_index=True)
+                except Exception as e: st.error(f"Error: {e}")
+
+
 def page_developer():
+    if "developer_sub" not in st.session_state:
+        st.session_state.developer_sub = "logistica"
+
+    OPCIONES_DEV = ["📦 Logística", "🏥 Salud"]
+
     with st.sidebar:
         st.markdown("## ALDIMI-PREDICT")
         st.markdown("**Developer**")
         st.markdown("---")
         _sidebar_back(key="back_dev")
+        st.markdown("---")
+        idx = 0 if st.session_state.developer_sub == "logistica" else 1
+        sel = st.radio("Módulo", OPCIONES_DEV, index=idx, key="developer_sub_radio")
+        st.session_state.developer_sub = "logistica" if sel == OPCIONES_DEV[0] else "salud"
+        st.markdown("---")
         _sidebar_gcp()
         st.sidebar.markdown("---")
         st.sidebar.caption("ML 1ACC0057 · UPC 2025")
 
-    tab_log, tab_sal = st.tabs(["📦 Logística", "🏥 Salud"])
-
-    # ═══════════════════════ LOGÍSTICA ═══════════════════════
-    with tab_log:
-        st.markdown("""
-        <div class="page-header logistica">
-            <h1>📦 Developer — Logística</h1>
-            <p>KPI de producción · Comparación de modelos · Exportación · Reentrenamiento · Datos Bronze</p>
-        </div>""", unsafe_allow_html=True)
-
-        tab_kpi,tab_cmp,tab_exp,tab_ret,tab_dat = st.tabs([
-            "📊 KPI","🔬 Comparación","📁 Exportar","🔄 Reentrenar","✏️ Datos",
-        ])
-
-        # KPI ──────────────────────────────────────────────────────
-        with tab_kpi:
-            st.markdown('<div class="section-title">KPIs de Producción</div>', unsafe_allow_html=True)
-            d7  = min((r for r in METRICAS_REG if r["Target"]=="demand7"), key=lambda x:x["WAPE%"])
-            d14 = min((r for r in METRICAS_REG if r["Target"]=="demand14"),key=lambda x:x["WAPE%"])
-            c1,c2,c3,c4,c5 = st.columns(5)
-            c1.metric("Mejor demand7",  d7["Modelo"])
-            c2.metric("WAPE% demand7",  f"{d7['WAPE%']:.2f}%",  "Objetivo <20%")
-            c3.metric("R² demand7",     f"{d7['R2']:.4f}",      "Objetivo >0.91")
-            c4.metric("WAPE% demand14", f"{d14['WAPE%']:.2f}%", "Objetivo <20%")
-            c5.metric("Acc. perecibilidad", "100%", "Objetivo >95%")
-            st.markdown("<br>", unsafe_allow_html=True)
-            ca,cb = st.columns(2)
-            for col,target in [(ca,"demand7"),(cb,"demand14")]:
-                with col:
-                    st.markdown(f'<div class="section-title">Cumplimiento — {target}</div>', unsafe_allow_html=True)
-                    for r in (x for x in METRICAS_REG if x["Target"]==target):
-                        ok = r["WAPE%"]<20; c=("#22c55e" if ok else "#ef4444"); ic=("✓" if ok else "✗")
-                        st.markdown(
-                            f'<div class="kpi-row" style="border-left:4px solid {c};">'
-                            f'<b>{r["Modelo"]}</b>: WAPE={r["WAPE%"]}% · R²={r["R2"]} · MAE={r["MAE"]}'
-                            f'<span style="color:{c};font-weight:800;float:right;">{ic}</span></div>',
-                            unsafe_allow_html=True)
-
-        # COMPARACIÓN ──────────────────────────────────────────────
-        with tab_cmp:
-            st.markdown('<div class="section-title">Comparación de Modelos — Regresión de Demanda</div>', unsafe_allow_html=True)
-            st.markdown('<div class="alert-box alert-teal">XGBoost lidera en WAPE% para ambos horizontes. Todos superan R²=0.91 — objetivo cumplido.</div>', unsafe_allow_html=True)
-
-            df_reg = pd.DataFrame(METRICAS_REG)
-            st.dataframe(df_reg, use_container_width=True, hide_index=True)
-
-            s7  = df_reg[df_reg["Target"]=="demand7"]
-            s14 = df_reg[df_reg["Target"]=="demand14"]
-
-            col1,col2 = st.columns(2)
-            with col1:
-                st.plotly_chart(_bar(s7["Modelo"].tolist(), s7["WAPE%"].tolist(),
-                    "WAPE% — demand7 (↓ mejor)","WAPE%",MODEL_COLORS,hline=20,hline_label="Objetivo 20%"),
-                    use_container_width=True)
-            with col2:
-                st.plotly_chart(_bar(s14["Modelo"].tolist(), s14["R2"].tolist(),
-                    "R² — demand14 (↑ mejor)","R²",MODEL_COLORS,hline=0.91,hline_label="Objetivo 0.91"),
-                    use_container_width=True)
-
-            col3,col4 = st.columns(2)
-            with col3:
-                st.plotly_chart(_bar(s7["Modelo"].tolist(), s7["MAE"].tolist(),
-                    "MAE — demand7","MAE",MODEL_COLORS), use_container_width=True)
-            with col4:
-                st.plotly_chart(_bar(s14["Modelo"].tolist(), s14["RMSE"].tolist(),
-                    "RMSE — demand14","RMSE",MODEL_COLORS), use_container_width=True)
-
-            st.markdown("---")
-            st.markdown('<div class="section-title">Clasificación de Perecibilidad</div>', unsafe_allow_html=True)
-            st.dataframe(pd.DataFrame(METRICAS_CLS_LOG), use_container_width=True, hide_index=True)
-            st.markdown('<div class="alert-box alert-teal">Todos los modelos alcanzan Accuracy=1.00 y AUC=1.00. Modelo en producción: XGBoost (xgb_perece.pkl).</div>', unsafe_allow_html=True)
-
-        # EXPORTAR ─────────────────────────────────────────────────
-        with tab_exp:
-            st.markdown('<div class="section-title">Exportar KPI — Logística</div>', unsafe_allow_html=True)
-            kpi = generate_kpi_logistica()
-            ca,cb = st.columns(2)
-            with ca:
-                kpi_json = json.dumps(kpi, indent=2, ensure_ascii=False)
-                st.download_button("⬇ KPI JSON", data=kpi_json.encode(),
-                    file_name=f"kpi_logistica_{datetime.now().strftime('%Y%m%d_%H%M')}.json",
-                    mime="application/json", use_container_width=True)
-                st.code(kpi_json[:500]+"\n...", language="json")
-            with cb:
-                rows=[{"modulo":"Logistica","target":t,"mejor_modelo":v["mejor_modelo"],
-                       "WAPE_pct":v["WAPE_pct"],"R2":v["R2"],"cumple":v["cumple"],
-                       "generado":kpi["generado"]} for t,v in kpi["kpis_regresion"].items()]
-                df_k=pd.DataFrame(rows)
-                st.download_button("⬇ KPI CSV", data=df_k.to_csv(index=False).encode(),
-                    file_name=f"kpi_logistica_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
-                    mime="text/csv", use_container_width=True)
-                st.dataframe(df_k, use_container_width=True, hide_index=True)
-
-        # REENTRENAR ───────────────────────────────────────────────
-        with tab_ret:
-            st.markdown('<div class="section-title">Reentrenar Modelos</div>', unsafe_allow_html=True)
-            st.markdown('<div class="alert-box alert-blue"><b>Flujo:</b> Gold BigQuery → feature engineering → XGBoost + RF → PKL → GCS → recarga</div>', unsafe_allow_html=True)
-            cb,ci = st.columns([1,2])
-            with cb:
-                if st.button("🔄 Reentrenar ahora", key="ret_log", use_container_width=True):
-                    with st.spinner("Entrenando modelos de logística... (2-5 min)"):
-                        ok,msg = retrain_logistica()
-                    (st.success if ok else st.error)(msg)
-            with ci:
-                st.markdown('<div class="alert-box alert-gray"><b>Genera:</b> xgb_demand7.pkl · xgb_demand14.pkl · rf_demand7.pkl · rf_demand14.pkl · xgb_perece.pkl</div>', unsafe_allow_html=True)
-
-        # DATOS ────────────────────────────────────────────────────
-        with tab_dat:
-            st.markdown('<div class="section-title">Ingreso Manual de Datos</div>', unsafe_allow_html=True)
-            with st.form("form_log"):
-                c1,c2,c3 = st.columns(3)
-                with c1:
-                    fecha=st.date_input("Fecha",value=datetime.now())
-                    familia=st.selectbox("Familia",FAMILIES)
-                    ciudad=st.selectbox("Ciudad",CITIES)
-                with c2:
-                    tienda=st.number_input("N° tienda",1,54,5)
-                    tipo=st.selectbox("Tipo tienda",["A","B","C","D","E"])
-                    ventas=st.number_input("Ventas (uds)",0.0,500.0,10.0,step=0.5)
-                with c3:
-                    onpromo=st.checkbox("En promoción")
-                    oil=st.number_input("Precio petróleo (USD)",20.0,120.0,52.0,step=0.5)
-                    trans=st.number_input("Transacciones",0,10000,500)
-                if st.form_submit_button("Registrar"):
-                    st.session_state.historial_dev_log.append({
-                        "date":str(fecha),"store_nbr":tienda,"family":familia,"unit_sales":ventas,
-                        "onpromotion":onpromo,"city":ciudad,"state":"—","store_type":tipo,
-                        "cluster":5,"dcoilwtico":oil,"holiday_type":"Normal","transferred":False,"n_transactions":trans,
-                    })
-                    st.success(f"Registro guardado: {familia} | {ciudad} | {ventas} uds")
-
-            if st.session_state.historial_dev_log:
-                df_h=pd.DataFrame(st.session_state.historial_dev_log)
-                st.dataframe(df_h, use_container_width=True, hide_index=True)
-                ca,cb=st.columns(2)
-                with ca:
-                    st.download_button("⬇ Exportar CSV",data=df_h.to_csv(index=False).encode(),
-                        file_name=f"log_manual_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
-                        mime="text/csv",use_container_width=True)
-                with cb:
-                    if st.button("Enviar a GCP Bronze",key="send_log_gcp",use_container_width=True):
-                        if HAS_GCP:
-                            ok,msg=upload_bronze_logistica(df_h,source="manual_dev"); (st.success if ok else st.error)(msg)
-                        else: st.warning("GCP no disponible.")
-
-            st.markdown("---")
-            st.markdown('<div class="section-title">Carga masiva CSV</div>', unsafe_allow_html=True)
-            up=st.file_uploader("Subir CSV de logística (Bronze)",type=["csv","txt"],key="uplog")
-            if up:
-                try:
-                    st.dataframe(pd.read_csv(up,nrows=5),use_container_width=True,hide_index=True)
-                    if st.button("Subir a GCP Bronze (chunked)",key="uplog_gcp",use_container_width=True):
-                        if HAS_GCP:
-                            up.seek(0); total=0
-                            for chunk in pd.read_csv(up,chunksize=50_000):
-                                ok,msg=upload_bronze_logistica(chunk,source=up.name)
-                                if not ok: st.error(msg); break
-                                total+=len(chunk)
-                            st.success(f"{total:,} filas subidas a Bronze (logística).")
-                        else: st.warning("GCP no disponible.")
-                except Exception as e: st.error(f"Error: {e}")
-
-    # ═══════════════════════ SALUD ═══════════════════════
-    with tab_sal:
-        st.markdown("""
-        <div class="page-header salud">
-            <h1>🏥 Developer — Salud Oncológica</h1>
-            <p>KPI de producción · Comparación de modelos · Exportación · Reentrenamiento · Datos Bronze</p>
-        </div>""", unsafe_allow_html=True)
-
-        data = load_and_train_salud()
-
-        tab_kpi,tab_cmp,tab_exp,tab_ret,tab_dat = st.tabs([
-            "📊 KPI","🔬 Comparación","📁 Exportar","🔄 Reentrenar","✏️ Datos",
-        ])
-
-        # KPI ──────────────────────────────────────────────────────
-        with tab_kpi:
-            st.markdown('<div class="section-title salud">KPIs de Producción</div>', unsafe_allow_html=True)
-            if data:
-                bn,bd=max(data["results"].items(),
-                    key=lambda kv:metricas_salud(data["y_test"],kv[1]["y_pred"],kv[1]["y_prob"])["auc_macro"])
-                m=metricas_salud(data["y_test"],bd["y_pred"],bd["y_prob"])
-                c1,c2,c3,c4,c5=st.columns(5)
-                c1.metric("Mejor modelo",  bn)
-                c2.metric("Accuracy",     f"{m['accuracy']:.4f}",  "Objetivo >0.85")
-                c3.metric("AUC Macro",    f"{m['auc_macro']:.4f}", "Objetivo >0.85")
-                c4.metric("Recall ALTO",  f"{m['recall_alto']:.4f}","Clase crítica")
-                c5.metric("F1 Macro",     f"{m['f1_macro']:.4f}",  "Objetivo >0.85")
-                st.markdown("<br>", unsafe_allow_html=True)
-                st.markdown('<div class="section-title salud">Cumplimiento por Modelo</div>', unsafe_allow_html=True)
-                for nm,res in data["results"].items():
-                    mi=metricas_salud(data["y_test"],res["y_pred"],res["y_prob"])
-                    ok_a=mi["accuracy"]>=0.85; ok_u=mi["auc_macro"]>=0.85; ok_r=mi["recall_alto"]>=0.85
-                    c="#22c55e" if (ok_a and ok_u and ok_r) else "#f59e0b"
-                    st.markdown(
-                        f'<div class="kpi-row" style="border-left:5px solid {c};">'
-                        f'<b>{nm}</b> · Acc={mi["accuracy"]:.4f}{"✓" if ok_a else "✗"}'
-                        f' · AUC={mi["auc_macro"]:.4f}{"✓" if ok_u else "✗"}'
-                        f' · Recall Alto={mi["recall_alto"]:.4f}{"✓" if ok_r else "✗"}'
-                        f'</div>', unsafe_allow_html=True)
-            else:
-                st.markdown('<div class="alert-box alert-warning">Dataset no disponible. Coloca el CSV en <code>data/global_cancer_patients_2015_2024.csv</code></div>', unsafe_allow_html=True)
-                st.dataframe(pd.DataFrame(METRICAS_SALUD), use_container_width=True, hide_index=True)
-
-        # COMPARACIÓN ──────────────────────────────────────────────
-        with tab_cmp:
-            st.markdown('<div class="section-title salud">Comparación de Modelos — Salud Oncológica</div>', unsafe_allow_html=True)
-            if data:
-                rows=[]
-                for nm,res in data["results"].items():
-                    mi=metricas_salud(data["y_test"],res["y_pred"],res["y_prob"])
-                    rows.append({"Modelo":nm,"Accuracy":round(mi["accuracy"],4),
-                                 "F1 Macro":round(mi["f1_macro"],4),"AUC Macro":round(mi["auc_macro"],4),
-                                 "Recall Bajo":round(mi["rec"][0],4) if len(mi["rec"])>0 else 0,
-                                 "Recall Medio":round(mi["rec"][1],4) if len(mi["rec"])>1 else 0,
-                                 "Recall Alto":round(mi["recall_alto"],4)})
-                comp=pd.DataFrame(rows)
-            else:
-                comp=pd.DataFrame(METRICAS_SALUD)
-            st.dataframe(comp, use_container_width=True, hide_index=True)
-
-            col1,col2=st.columns(2)
-            with col1:
-                mods=comp["Modelo"].tolist()
-                fig_glob=_grouped_bar(mods,{
-                    "Accuracy":  comp["Accuracy"].tolist() if "Accuracy" in comp else comp.get("Accuracy",[]),
-                    "AUC Macro": comp["AUC Macro"].tolist() if "AUC Macro" in comp else comp.get("AUC_Macro",[]),
-                    "F1 Macro":  comp["F1 Macro"].tolist()  if "F1 Macro"  in comp else comp.get("F1_Macro", []),
-                },"Métricas Globales",hline=0.85,hline_label="Umbral 0.85")
-                st.plotly_chart(fig_glob, use_container_width=True)
-            with col2:
-                rb = comp["Recall Bajo"].tolist()  if "Recall Bajo"  in comp else [0.97]*len(comp)
-                rm = comp["Recall Medio"].tolist() if "Recall Medio" in comp else [0.98]*len(comp)
-                ra = comp["Recall Alto"].tolist()  if "Recall Alto"  in comp else comp.get("Recall_Alto",[0.97]*len(comp))
-                fig_rec=_grouped_bar(CLASE_LABELS,{
-                    nm:[rb[i],rm[i],ra[i]] for i,nm in enumerate(comp["Modelo"].tolist())
-                },"Recall por Clase",hline=0.85)
-                st.plotly_chart(fig_rec, use_container_width=True)
-
-            if data:
-                st.markdown("---")
-                ca,cb=st.columns(2)
-                best_nm=comp.loc[comp["AUC Macro"].idxmax(),"Modelo"] if "AUC Macro" in comp else comp.loc[comp["AUC_Macro"].idxmax(),"Modelo"]
-                best_res=data["results"][best_nm]
-                with ca:
-                    st.markdown(f'<div class="section-title salud">Matriz de Confusión — {best_nm}</div>', unsafe_allow_html=True)
-                    cm=confusion_matrix(data["y_test"],best_res["y_pred"])
-                    st.plotly_chart(_heatmap(cm.tolist(),CLASE_LABELS,CLASE_LABELS), use_container_width=True)
-                with cb:
-                    st.markdown(f'<div class="section-title salud">Reporte — {best_nm}</div>', unsafe_allow_html=True)
-                    rep=classification_report(data["y_test"],best_res["y_pred"],
-                        target_names=CLASE_LABELS,output_dict=True,zero_division=0)
-                    df_rep=pd.DataFrame(rep).T.round(4).drop(index=["accuracy"],errors="ignore")
-                    st.dataframe(df_rep.style.background_gradient(cmap="Purples",
-                        subset=["precision","recall","f1-score"]), use_container_width=True)
-
-        # EXPORTAR ─────────────────────────────────────────────────
-        with tab_exp:
-            st.markdown('<div class="section-title salud">Exportar KPI — Salud</div>', unsafe_allow_html=True)
-            kpi=generate_kpi_salud(data)
-            ca,cb=st.columns(2)
-            with ca:
-                kpi_json=json.dumps(kpi,indent=2,ensure_ascii=False)
-                st.download_button("⬇ KPI JSON",data=kpi_json.encode(),
-                    file_name=f"kpi_salud_{datetime.now().strftime('%Y%m%d_%H%M')}.json",
-                    mime="application/json",use_container_width=True)
-                st.code(kpi_json[:500]+"\n...",language="json")
-            with cb:
-                os.makedirs("kpi_exports",exist_ok=True)
-                p=f"kpi_exports/kpi_salud_{datetime.now().strftime('%Y%m%d')}.json"
-                with open(p,"w",encoding="utf-8") as f: json.dump(kpi,f,indent=2,ensure_ascii=False)
-                st.markdown(f'<div class="alert-box alert-teal">Guardado en: <code>{p}</code></div>', unsafe_allow_html=True)
-                if data:
-                    rows=[{"modelo":nm,"accuracy":round(metricas_salud(data["y_test"],r["y_pred"],r["y_prob"])["accuracy"],4),
-                           "auc_macro":round(metricas_salud(data["y_test"],r["y_pred"],r["y_prob"])["auc_macro"],4),
-                           "recall_alto":round(metricas_salud(data["y_test"],r["y_pred"],r["y_prob"])["recall_alto"],4)}
-                          for nm,r in data["results"].items()]
-                    df_kc=pd.DataFrame(rows)
-                    st.download_button("⬇ KPI CSV",data=df_kc.to_csv(index=False).encode(),
-                        file_name=f"kpi_salud_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
-                        mime="text/csv",use_container_width=True)
-                    st.dataframe(df_kc,use_container_width=True,hide_index=True)
-
-        # REENTRENAR ───────────────────────────────────────────────
-        with tab_ret:
-            st.markdown('<div class="section-title salud">Reentrenar Modelos</div>', unsafe_allow_html=True)
-            st.markdown('<div class="alert-box alert-purple"><b>Flujo:</b> Gold BigQuery → feature engineering → XGBoost + RF + MLP → PKL → GCS → recarga</div>', unsafe_allow_html=True)
-            cb,ci=st.columns([1,2])
-            with cb:
-                if st.button("🔄 Reentrenar ahora",key="ret_sal",use_container_width=True):
-                    with st.spinner("Entrenando modelos de salud... (2-5 min)"):
-                        ok,msg=retrain_salud()
-                    (st.success if ok else st.error)(msg)
-            with ci:
-                st.markdown('<div class="alert-box alert-gray"><b>Genera:</b> xgb_salud.pkl · rf_salud.pkl · mlp_salud.pkl · scaler_salud.pkl · feature_cols_salud.pkl</div>', unsafe_allow_html=True)
-
-        # DATOS ────────────────────────────────────────────────────
-        with tab_dat:
-            st.markdown('<div class="section-title salud">Dataset de Salud</div>', unsafe_allow_html=True)
-            if data and data.get("df_raw") is not None:
-                df_raw=data["df_raw"]
-                st.markdown(f"Dataset cargado: **{len(df_raw):,} pacientes**")
-                st.dataframe(df_raw.head(10), use_container_width=True)
-                ca,cb=st.columns(2)
-                with ca:
-                    st.download_button("⬇ Exportar CSV",data=df_raw.to_csv(index=False).encode(),
-                        file_name=f"salud_{datetime.now().strftime('%Y%m%d')}.csv",
-                        mime="text/csv",use_container_width=True)
-                with cb:
-                    if st.button("Enviar a GCP Bronze",key="send_sal_gcp",use_container_width=True):
-                        if HAS_GCP:
-                            ok,msg=upload_bronze_salud(df_raw,source="full_dataset"); (st.success if ok else st.error)(msg)
-                        else: st.warning("GCP no disponible.")
-            else:
-                st.markdown('<div class="alert-box alert-warning">Dataset no encontrado. Sube el CSV aquí.</div>', unsafe_allow_html=True)
-                up=st.file_uploader("Subir dataset de salud (CSV)",type=["csv","txt"],key="up_sal")
-                if up:
-                    try: st.dataframe(pd.read_csv(up,nrows=100),use_container_width=True,hide_index=True)
-                    except Exception as e: st.error(f"Error: {e}")
+    if st.session_state.developer_sub == "logistica":
+        _render_developer_logistica()
+    else:
+        _render_developer_salud()
 
 
 # ─────────────────────────────────────────────────────────────
