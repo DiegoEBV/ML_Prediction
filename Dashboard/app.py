@@ -51,7 +51,7 @@ st.set_page_config(
     page_title="ALDIMI-PREDICT",
     page_icon="🏥",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 # ─────────────────────────────────────────────────────────────
@@ -62,11 +62,13 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 *,html,body{font-family:'Inter',sans-serif!important;}
+[data-testid="stIconMaterial"]{font-family:'Material Symbols Rounded'!important;}
 
-/* ── ocultar artefactos ── */
-button[data-testid="stSidebarCollapseButton"],
-button[data-testid="stBaseButton-headerNoPadding"],
-#MainMenu,footer,header{display:none!important;}
+/* ── ocultar artefactos (se deja visible el botón para colapsar el sidebar) ── */
+[data-testid="stToolbarActions"],
+[data-testid="stAppDeployButton"],
+#MainMenu,footer{display:none!important;}
+header{background:transparent!important;box-shadow:none!important;}
 
 /* ── fondo ── */
 .stApp,[data-testid="stAppViewContainer"],[data-testid="stAppViewContainer"]>.main,.main{
@@ -83,6 +85,8 @@ section[data-testid="stSidebar"]>div:first-child,
     border-right:1px solid rgba(255,255,255,.06)!important;}
 section[data-testid="stSidebar"]>div:first-child{min-height:100vh!important;padding-top:0!important;}
 section[data-testid="stSidebar"] *{color:#bfdbfe!important;font-family:'Inter',sans-serif!important;}
+section[data-testid="stSidebar"] [data-testid="stIconMaterial"]{
+    font-family:'Material Symbols Rounded'!important;color:#bfdbfe!important;}
 section[data-testid="stSidebar"] h1,
 section[data-testid="stSidebar"] h2,
 section[data-testid="stSidebar"] h3{color:#fff!important;font-weight:800!important;}
