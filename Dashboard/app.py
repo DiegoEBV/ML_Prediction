@@ -731,13 +731,6 @@ def page_landing():
     st.sidebar.markdown("---")
     st.sidebar.caption("ML 1ACC0057 · UPC · GCP mlaldimi")
 
-    st.markdown("""
-    <div class="landing-bg">
-        <div class="landing-title">ALDIMI-PREDICT</div>
-        <div class="landing-sub">Plataforma integral de predicción con Machine Learning</div>
-        <div class="landing-caption">ML 1ACC0057 · UPC · Proyecto GCP: 413462127752 | mlaldimi</div>
-    </div>""", unsafe_allow_html=True)
-
     c1,c2 = st.columns(2, gap="large")
     views = [
         (c1,"developer","🛠️","Developer",
@@ -759,21 +752,6 @@ def page_landing():
             </div>""", unsafe_allow_html=True)
             if st.button(f"Abrir", key=f"btn_{vista}", use_container_width=True):
                 st.session_state.vista=vista; st.rerun()
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    a1,a2,a3 = st.columns(3)
-    for col,icon,name,color,desc in [
-        (a1,"🥉","Bronze","#b45309","Datos crudos ingestados · bronze_salud / bronze_logistica"),
-        (a2,"🥈","Silver","#64748b","Datos limpios y validados · silver_salud / silver_logistica"),
-        (a3,"🥇","Gold",  "#92400e","Features para ML · gold_salud / gold_logistica"),
-    ]:
-        with col:
-            st.markdown(f"""
-            <div class="arch-card" style="border-top:4px solid {color};">
-                <div style="font-size:2rem;">{icon}</div>
-                <div style="font-weight:800;color:{color};margin-top:6px;">{name}</div>
-                <div style="font-size:.78rem;color:#64748b;margin-top:5px;">{desc}</div>
-            </div>""", unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────────────────────
