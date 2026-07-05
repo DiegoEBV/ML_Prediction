@@ -269,14 +269,14 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p{
 
 /* ── KPI rows ── */
 .kpi-row{margin:6px 0;padding:12px 16px;background:#fff;border-radius:12px;font-size:.87rem;
-    box-shadow:0 1px 4px rgba(15,36,96,.05);transition:all .15s;}
+    color:#1e293b;box-shadow:0 1px 4px rgba(15,36,96,.05);transition:all .15s;}
 .kpi-row:hover{box-shadow:0 6px 16px rgba(15,36,96,.1);transform:translateX(2px);}
 
 /* ── result cards (trabajador) ── */
 .result-card{border-radius:16px;padding:26px 22px;text-align:center;margin:8px 0 14px;
     box-shadow:0 4px 14px rgba(0,0,0,.1);}
 .result-card h1{font-size:2.1rem!important;font-weight:900!important;margin:0 0 10px!important;}
-.result-card p{font-size:.88rem;margin:3px 0;}
+.result-card p{font-size:.88rem;margin:3px 0;color:#334155;}
 .result-card.alto {background:linear-gradient(135deg,#fef2f2,#fee2e2);border:2px solid #ef4444;}
 .result-card.alto  h1{color:#b91c1c!important;}
 .result-card.medio{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2px solid #f59e0b;}
