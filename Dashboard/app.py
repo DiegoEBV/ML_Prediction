@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ALDIMI-PREDICT | Dashboard v4.0
-Vistas: Landing · Dev Logística · Dev Salud · Trabajador · Nutrición Oncológica
+Vistas: Landing · Developer (Logística + Salud) · Vista Usuario (Clasificación + Nutrición)
 """
 
 import streamlit as st
@@ -62,17 +62,22 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 *,html,body{font-family:'Inter',sans-serif!important;}
+[data-testid="stIconMaterial"]{font-family:'Material Symbols Rounded'!important;}
 
-/* ── ocultar artefactos ── */
-button[data-testid="stSidebarCollapseButton"],
-button[data-testid="stBaseButton-headerNoPadding"],
-#MainMenu,footer,header{display:none!important;}
+/* ── ocultar artefactos (se deja visible el botón para colapsar el sidebar) ── */
+[data-testid="stToolbarActions"],
+[data-testid="stAppDeployButton"],
+#MainMenu,footer{display:none!important;}
+header{background:transparent!important;box-shadow:none!important;}
 
 /* ── fondo ── */
-.stApp,[data-testid="stAppViewContainer"],[data-testid="stAppViewContainer"]>.main,.main{
-    background:#f1f5f9!important;}
-.main .block-container{
-    padding:2rem 2.2rem 3rem!important;max-width:1500px!important;background:transparent!important;}
+.stApp,[data-testid="stAppViewContainer"]{
+    background:
+        radial-gradient(circle at 0% 0%, rgba(37,99,235,.05), transparent 40%),
+        radial-gradient(circle at 100% 0%, rgba(124,58,237,.045), transparent 40%),
+        #f1f5f9!important;}
+.block-container{
+    padding:2rem 2.4rem 3rem!important;max-width:1500px!important;background:transparent!important;}
 
 /* ── sidebar ── */
 section[data-testid="stSidebar"],
@@ -83,6 +88,8 @@ section[data-testid="stSidebar"]>div:first-child,
     border-right:1px solid rgba(255,255,255,.06)!important;}
 section[data-testid="stSidebar"]>div:first-child{min-height:100vh!important;padding-top:0!important;}
 section[data-testid="stSidebar"] *{color:#bfdbfe!important;font-family:'Inter',sans-serif!important;}
+section[data-testid="stSidebar"] [data-testid="stIconMaterial"]{
+    font-family:'Material Symbols Rounded'!important;color:#bfdbfe!important;}
 section[data-testid="stSidebar"] h1,
 section[data-testid="stSidebar"] h2,
 section[data-testid="stSidebar"] h3{color:#fff!important;font-weight:800!important;}
@@ -139,12 +146,16 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p{
 
 /* ── metrics ── */
 [data-testid="stMetric"]{
-    background:#fff!important;border-radius:14px!important;padding:16px 18px!important;
-    box-shadow:0 1px 6px rgba(15,36,96,.09)!important;border-left:4px solid #2563eb!important;}
+    background:#fff!important;border-radius:16px!important;padding:18px 20px!important;
+    box-shadow:0 2px 10px rgba(15,36,96,.07)!important;border:1px solid #eef2f7!important;
+    border-top:3px solid #2563eb!important;transition:all .18s!important;}
+[data-testid="stMetric"]:hover{
+    box-shadow:0 10px 26px rgba(15,36,96,.14)!important;transform:translateY(-2px)!important;}
 [data-testid="stMetricLabel"]{
-    font-size:.69rem!important;color:#64748b!important;
-    font-weight:700!important;text-transform:uppercase!important;letter-spacing:.5px!important;}
-[data-testid="stMetricValue"]{font-size:1.5rem!important;font-weight:800!important;color:#0f172a!important;}
+    font-size:.68rem!important;color:#94a3b8!important;
+    font-weight:800!important;text-transform:uppercase!important;letter-spacing:.6px!important;}
+[data-testid="stMetricValue"]{font-size:1.6rem!important;font-weight:800!important;color:#0f172a!important;}
+[data-testid="stMetricDeltaIcon-Up"] svg, [data-testid="stMetricDeltaIcon-Down"] svg{margin-right:2px;}
 
 /* ── buttons ── */
 .stButton>button{
@@ -158,12 +169,12 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p{
 
 /* ── tabs ── */
 .stTabs [data-baseweb="tab-list"]{
-    background:#fff!important;border-radius:12px!important;padding:5px!important;
-    gap:3px!important;box-shadow:0 1px 4px rgba(0,0,0,.07)!important;
-    border:1px solid #e2e8f0!important;margin-bottom:6px!important;}
+    background:#fff!important;border-radius:14px!important;padding:6px!important;
+    gap:4px!important;box-shadow:0 2px 8px rgba(15,36,96,.06)!important;
+    border:1px solid #e2e8f0!important;margin-bottom:8px!important;}
 .stTabs [data-baseweb="tab"]{
-    background:transparent!important;border-radius:9px!important;padding:9px 16px!important;
-    font-weight:500!important;color:#64748b!important;font-size:.83rem!important;
+    background:transparent!important;border-radius:10px!important;padding:9px 16px!important;
+    font-weight:600!important;color:#64748b!important;font-size:.83rem!important;
     border:none!important;transition:all .15s!important;}
 .stTabs [data-baseweb="tab"]:hover{background:#f1f5f9!important;color:#374151!important;}
 .stTabs [aria-selected="true"]{
@@ -171,52 +182,80 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p{
     box-shadow:0 2px 8px rgba(29,78,216,.35)!important;font-weight:700!important;}
 
 /* ── landing ── */
-.landing-bg{
-    background:linear-gradient(135deg,#0c1a4e 0%,#1e3a8a 45%,#1d4ed8 100%);
-    border-radius:20px;padding:52px 32px 42px;text-align:center;
-    margin-bottom:32px;box-shadow:0 8px 32px rgba(12,26,78,.32);}
+.block-container:has(.landing-wrap){
+    max-width:980px!important;padding-top:6vh!important;
+    margin-left:auto!important;margin-right:auto!important;}
+
+.landing-wrap{margin-bottom:8px;}
+.landing-eyebrow{
+    display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:1.3px;
+    text-transform:uppercase;color:#2563eb;background:#eff6ff;
+    padding:6px 16px;border-radius:20px;margin-bottom:18px;}
 .landing-title{
-    font-size:2.9rem!important;font-weight:900!important;color:#fff!important;
-    margin:0 0 10px!important;letter-spacing:-1.5px!important;}
-.landing-sub{font-size:1rem;color:#93c5fd;margin:4px 0;}
-.landing-caption{font-size:.8rem;color:#60a5fa;margin-top:12px;}
+    font-size:2.3rem!important;font-weight:900!important;color:#0f172a!important;
+    margin:0 0 10px!important;letter-spacing:-1px!important;}
+.landing-sub{font-size:1rem;color:#64748b;margin:0 0 8px;line-height:1.5;}
 
 .view-card{
-    background:#fff;border-radius:18px;padding:34px 24px;text-align:center;
-    box-shadow:0 2px 10px rgba(15,36,96,.09);transition:all .2s;
-    margin-bottom:14px;cursor:pointer;}
-.view-card:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(15,36,96,.18);}
-.view-card.logistica{border-top:5px solid #0369a1;}
-.view-card.salud    {border-top:5px solid #7c3aed;}
-.view-card.worker   {border-top:5px solid #6d28d9;}
-.view-card.nutricion{border-top:5px solid #0d9488;}
-.view-icon{font-size:2.6rem;margin-bottom:10px;}
-.view-card h2{font-size:1.2rem;font-weight:800;color:#0f172a;margin:0 0 8px;}
-.view-card p{font-size:.83rem;color:#64748b;margin:0;line-height:1.6;}
-.view-card .sub{font-size:.76rem;color:#94a3b8;margin-top:6px;}
+    background:#fff;border-radius:20px;padding:32px 26px 26px;text-align:center;
+    box-shadow:0 2px 14px rgba(15,36,96,.08);transition:all .22s;
+    border:1px solid #eef2f7;height:100%;}
+.view-card:hover{transform:translateY(-5px);box-shadow:0 16px 36px rgba(15,36,96,.16);
+    border-color:transparent;}
+.view-icon-wrap{
+    width:64px;height:64px;border-radius:18px;display:flex;align-items:center;
+    justify-content:center;margin:0 auto 16px;font-size:1.9rem;}
+.view-card.developer .view-icon-wrap{background:linear-gradient(135deg,#e0f2fe,#bae6fd);}
+.view-card.usuario   .view-icon-wrap{background:linear-gradient(135deg,#f3e8ff,#e9d5ff);}
+.view-card h2{font-size:1.25rem;font-weight:800;color:#0f172a;margin:0 0 10px;}
+.view-card p{font-size:.85rem;color:#64748b;margin:0;line-height:1.6;}
+.view-card .sub{font-size:.77rem;color:#94a3b8;margin-top:8px;}
 
-.badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:.74rem;font-weight:700;margin-top:12px;}
-.badge-logistica{background:#e0f2fe;color:#0369a1;}
-.badge-salud    {background:#ede9fe;color:#6d28d9;}
-.badge-worker   {background:#f3e8ff;color:#6d28d9;}
-.badge-nutricion{background:#ccfbf1;color:#0f766e;}
+.badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:.74rem;font-weight:700;margin-top:14px;}
+.badge-developer{background:#e0f2fe;color:#0369a1;}
+.badge-usuario  {background:#f3e8ff;color:#6d28d9;}
+
+/* botones "Abrir" pegados a su tarjeta, con color por módulo */
+[data-testid="stHorizontalBlock"]:has(.view-card) [data-testid="stButton"]{
+    margin-top:-16px!important;}
+[data-testid="stHorizontalBlock"]:has(.view-card) [data-testid="stColumn"]:nth-of-type(1) .stButton>button{
+    background:linear-gradient(135deg,#0369a1,#0c4a6e)!important;border:none!important;
+    border-radius:0 0 16px 16px!important;font-weight:700!important;padding:12px!important;
+    box-shadow:none!important;transition:all .18s!important;}
+[data-testid="stHorizontalBlock"]:has(.view-card) [data-testid="stColumn"]:nth-of-type(2) .stButton>button{
+    background:linear-gradient(135deg,#6d28d9,#4c1d95)!important;border:none!important;
+    border-radius:0 0 16px 16px!important;font-weight:700!important;padding:12px!important;
+    box-shadow:none!important;transition:all .18s!important;}
+[data-testid="stHorizontalBlock"]:has(.view-card) .stButton>button:hover{
+    filter:brightness(1.12)!important;}
 
 /* ── page header ── */
-.page-header{border-radius:16px;padding:20px 26px;margin-bottom:22px;box-shadow:0 4px 14px rgba(0,0,0,.15);}
+.page-header{
+    border-radius:18px;padding:24px 30px;margin-bottom:24px;
+    box-shadow:0 10px 28px rgba(0,0,0,.16);position:relative;overflow:hidden;}
+.page-header::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(circle at 100% 0%, rgba(255,255,255,.16), transparent 55%);}
 .page-header.logistica{background:linear-gradient(135deg,#0c4a6e,#0369a1);}
 .page-header.salud    {background:linear-gradient(135deg,#3b0764,#7c3aed);}
 .page-header.worker   {background:linear-gradient(135deg,#2e1065,#6d28d9);}
 .page-header.nutricion{background:linear-gradient(135deg,#042f2e,#0d9488);}
-.page-header h1{font-size:1.55rem!important;font-weight:800!important;color:#fff!important;margin:0 0 4px!important;}
-.page-header p{font-size:.83rem;color:rgba(255,255,255,.75);margin:0;}
+.page-header h1{font-size:1.6rem!important;font-weight:800!important;color:#fff!important;
+    margin:0 0 5px!important;position:relative;z-index:1;letter-spacing:-.3px!important;}
+.page-header p{font-size:.85rem;color:rgba(255,255,255,.8);margin:0;position:relative;z-index:1;}
 
 /* ── section titles ── */
 .section-title{
-    font-size:1rem;font-weight:700;color:#1e3a8a;
-    padding:5px 0 9px;border-bottom:2px solid #dbeafe;margin-bottom:12px;}
+    font-size:1.02rem;font-weight:800;color:#1e3a8a;
+    padding:6px 0 10px 14px;border-bottom:2px solid #dbeafe;margin-bottom:14px;position:relative;}
+.section-title::before{
+    content:"";position:absolute;left:0;top:7px;bottom:11px;width:4px;border-radius:4px;background:#2563eb;}
 .section-title.salud  {color:#5b21b6;border-bottom-color:#ddd6fe;}
+.section-title.salud::before{background:#7c3aed;}
 .section-title.teal   {color:#0f766e;border-bottom-color:#99f6e4;}
+.section-title.teal::before{background:#0d9488;}
 .section-title.gray   {color:#374151;border-bottom-color:#e5e7eb;}
+.section-title.gray::before{background:#64748b;}
 
 /* ── alert boxes ── */
 .alert-box{border-radius:10px;padding:12px 15px;margin:8px 0;font-size:.84rem;font-weight:500;line-height:1.55;}
@@ -229,13 +268,15 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p{
 .alert-purple{background:#faf5ff;border-left:4px solid #7c3aed;color:#3b0764;}
 
 /* ── KPI rows ── */
-.kpi-row{margin:5px 0;padding:10px 14px;background:#f8fafc;border-radius:9px;font-size:.87rem;}
+.kpi-row{margin:6px 0;padding:12px 16px;background:#fff;border-radius:12px;font-size:.87rem;
+    color:#1e293b;box-shadow:0 1px 4px rgba(15,36,96,.05);transition:all .15s;}
+.kpi-row:hover{box-shadow:0 6px 16px rgba(15,36,96,.1);transform:translateX(2px);}
 
 /* ── result cards (trabajador) ── */
 .result-card{border-radius:16px;padding:26px 22px;text-align:center;margin:8px 0 14px;
     box-shadow:0 4px 14px rgba(0,0,0,.1);}
 .result-card h1{font-size:2.1rem!important;font-weight:900!important;margin:0 0 10px!important;}
-.result-card p{font-size:.88rem;margin:3px 0;}
+.result-card p{font-size:.88rem;margin:3px 0;color:#334155;}
 .result-card.alto {background:linear-gradient(135deg,#fef2f2,#fee2e2);border:2px solid #ef4444;}
 .result-card.alto  h1{color:#b91c1c!important;}
 .result-card.medio{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2px solid #f59e0b;}
@@ -258,6 +299,18 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p{
     box-shadow:0 1px 6px rgba(0,0,0,.07);}
 </style>
 """, unsafe_allow_html=True)
+
+# Selecciona automáticamente el valor de los campos numéricos al enfocarlos,
+# para poder escribir el nuevo número de una sola vez sin borrar el anterior.
+st.components.v1.html("""
+<script>
+window.parent.document.addEventListener("focusin", function(e) {
+    if (e.target && e.target.tagName === "INPUT" && e.target.type === "number") {
+        e.target.select();
+    }
+});
+</script>
+""", height=0)
 
 # ─────────────────────────────────────────────────────────────
 # CONSTANTES
@@ -736,69 +789,40 @@ def page_landing():
     st.sidebar.caption("ML 1ACC0057 · UPC · GCP mlaldimi")
 
     st.markdown("""
-    <div class="landing-bg">
-        <div class="landing-title">ALDIMI-PREDICT</div>
-        <div class="landing-sub">Plataforma integral de predicción con Machine Learning</div>
-        <div class="landing-caption">ML 1ACC0057 · UPC · Proyecto GCP: 413462127752 | mlaldimi</div>
+    <div class="landing-wrap">
+        <span class="landing-eyebrow">ML 1ACC0057 · UPC · GCP mlaldimi</span>
+        <h1 class="landing-title">¿Qué vista deseas abrir?</h1>
+        <p class="landing-sub">Elige el módulo según tu rol dentro de ALDIMI-PREDICT.</p>
     </div>""", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    c1,c2,c3,c4 = st.columns(4, gap="medium")
+    c1,c2 = st.columns(2, gap="large")
     views = [
-        (c1,"logistica","📦","Developer — Logística",
+        (c1,"developer","🛠️","Developer",
          "KPI · Comparación de modelos · Exportar · Reentrenar · Ingreso de datos",
-         "Regresión de demanda 7/14 días","badge-logistica","Analistas / Dev","dev_logistica"),
-        (c2,"salud","🏥","Developer — Salud",
-         "KPI · Comparación de modelos · Exportar · Reentrenar · Ingreso de datos",
-         "Clasificación oncológica (Bajo/Medio/Alto)","badge-salud","Analistas / Dev","dev_salud"),
-        (c3,"worker","👩‍⚕️","Vista Trabajador",
-         "Registro de pacientes · Clasificación de riesgo · Historial de atención",
-         "Clasificación automática en tiempo real","badge-worker","Personal de ALDIMI","trabajador"),
-        (c4,"nutricion","🍽️","Nutrición Oncológica",
-         "Plan de dieta por severidad · Requerimientos nutricionales · Proyección de insumos",
-         "Modelo combinado Salud + Logística","badge-nutricion","Dietistas / Coordinadores","nutricion"),
+         "Logística (demanda 7/14 días) · Salud (clasificación Bajo/Medio/Alto)","badge-developer","Analistas / Dev","developer"),
+        (c2,"usuario","👤","Vista Usuario",
+         "Registro de pacientes · Clasificación de riesgo · Plan de dieta y nutrición oncológica",
+         "Clasificación en tiempo real · Modelo combinado Salud + Logística","badge-usuario","Personal de ALDIMI","usuario"),
     ]
     for col,css,icon,title,desc,sub,badge_css,badge_txt,vista in views:
         with col:
             st.markdown(f"""
             <div class="view-card {css}">
-                <div class="view-icon">{icon}</div>
+                <div class="view-icon-wrap">{icon}</div>
                 <h2>{title}</h2>
                 <p>{desc}</p>
                 <p class="sub">{sub}</p>
                 <span class="badge {badge_css}">{badge_txt}</span>
             </div>""", unsafe_allow_html=True)
-            if st.button(f"Abrir", key=f"btn_{vista}", use_container_width=True):
+            if st.button("Abrir →", key=f"btn_{vista}", use_container_width=True):
                 st.session_state.vista=vista; st.rerun()
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    a1,a2,a3 = st.columns(3)
-    for col,icon,name,color,desc in [
-        (a1,"🥉","Bronze","#b45309","Datos crudos ingestados · bronze_salud / bronze_logistica"),
-        (a2,"🥈","Silver","#64748b","Datos limpios y validados · silver_salud / silver_logistica"),
-        (a3,"🥇","Gold",  "#92400e","Features para ML · gold_salud / gold_logistica"),
-    ]:
-        with col:
-            st.markdown(f"""
-            <div class="arch-card" style="border-top:4px solid {color};">
-                <div style="font-size:2rem;">{icon}</div>
-                <div style="font-weight:800;color:{color};margin-top:6px;">{name}</div>
-                <div style="font-size:.78rem;color:#64748b;margin-top:5px;">{desc}</div>
-            </div>""", unsafe_allow_html=True)
-
 
 # ─────────────────────────────────────────────────────────────
-# DEV LOGÍSTICA
+# DEVELOPER (Logística + Salud)
 # ─────────────────────────────────────────────────────────────
-def page_dev_logistica():
-    with st.sidebar:
-        st.markdown("## ALDIMI-PREDICT")
-        st.markdown("**Developer — Logística**")
-        st.markdown("---")
-        _sidebar_back(key="back_log")
-        _sidebar_gcp()
-        st.sidebar.markdown("---")
-        st.sidebar.caption("ML 1ACC0057 · UPC 2025")
-
+def _render_developer_logistica():
     st.markdown("""
     <div class="page-header logistica">
         <h1>📦 Developer — Logística</h1>
@@ -958,19 +982,7 @@ def page_dev_logistica():
             except Exception as e: st.error(f"Error: {e}")
 
 
-# ─────────────────────────────────────────────────────────────
-# DEV SALUD
-# ─────────────────────────────────────────────────────────────
-def page_dev_salud():
-    with st.sidebar:
-        st.markdown("## ALDIMI-PREDICT")
-        st.markdown("**Developer — Salud**")
-        st.markdown("---")
-        _sidebar_back(key="back_sal")
-        _sidebar_gcp()
-        st.sidebar.markdown("---")
-        st.sidebar.caption("ML 1ACC0057 · UPC 2025")
-
+def _render_developer_salud():
     st.markdown("""
     <div class="page-header salud">
         <h1>🏥 Developer — Salud Oncológica</h1>
@@ -1129,40 +1141,41 @@ def page_dev_salud():
                 except Exception as e: st.error(f"Error: {e}")
 
 
-# ─────────────────────────────────────────────────────────────
-# TRABAJADOR
-# ─────────────────────────────────────────────────────────────
-def page_trabajador():
-    data = load_and_train_salud()
+def page_developer():
+    if "developer_sub" not in st.session_state:
+        st.session_state.developer_sub = "logistica"
+
+    OPCIONES_DEV = ["📦 Logística", "🏥 Salud"]
 
     with st.sidebar:
         st.markdown("## ALDIMI-PREDICT")
-        st.markdown("**Vista Trabajador**")
+        st.markdown("**Developer**")
         st.markdown("---")
-        _sidebar_back(key="back_wk")
+        _sidebar_back(key="back_dev")
         st.markdown("---")
-        st.markdown("### Datos del Paciente")
-        age     = st.slider("Edad",20,90,50)
-        gender  = st.selectbox("Género",GENDERS)
-        country = st.selectbox("País / Región",COUNTRIES)
-        year    = st.selectbox("Año diagnóstico",list(range(2015,2026)),index=10)
-        st.markdown("#### Factores de Riesgo (0–10)")
-        gen_risk = st.slider("Riesgo Genético",   0.0,10.0,5.0,0.1)
-        air_poll = st.slider("Contaminación Aire",0.0,10.0,5.0,0.1)
-        alcohol  = st.slider("Consumo Alcohol",   0.0,10.0,5.0,0.1)
-        smoking  = st.slider("Tabaquismo",        0.0,10.0,5.0,0.1)
-        obesity  = st.slider("Nivel Obesidad",    0.0,10.0,5.0,0.1)
-        st.markdown("#### Datos Clínicos")
-        cancer_type  = st.selectbox("Tipo de Cáncer",CANCER_TYPES)
-        cancer_stage = st.selectbox("Etapa del Cáncer",CANCER_STAGES)
-        cost         = st.number_input("Costo tratamiento (USD)",0,500000,52000,step=1000)
-        survival     = st.slider("Años supervivencia",0.0,20.0,5.0,0.5)
+        idx = 0 if st.session_state.developer_sub == "logistica" else 1
+        sel = st.radio("Módulo", OPCIONES_DEV, index=idx, key="developer_sub_radio")
+        st.session_state.developer_sub = "logistica" if sel == OPCIONES_DEV[0] else "salud"
         st.markdown("---")
-        btn_cls = st.button("🔍 Clasificar Paciente",use_container_width=True)
+        _sidebar_gcp()
+        st.sidebar.markdown("---")
+        st.sidebar.caption("ML 1ACC0057 · UPC 2025")
 
+    if st.session_state.developer_sub == "logistica":
+        _render_developer_logistica()
+    else:
+        _render_developer_salud()
+
+
+# ─────────────────────────────────────────────────────────────
+# VISTA USUARIO (Clasificación de Pacientes + Nutrición Oncológica)
+# ─────────────────────────────────────────────────────────────
+def _render_usuario_clasificacion(data, age, gender, country, year, gen_risk, air_poll,
+                                   alcohol, smoking, obesity, cancer_type, cancer_stage,
+                                   cost, survival, btn_cls):
     st.markdown("""
     <div class="page-header worker">
-        <h1>👩‍⚕️ Vista Trabajador — Clasificación de Pacientes</h1>
+        <h1>👩‍⚕️ Vista Usuario — Clasificación de Pacientes</h1>
         <p>Ingresa los datos del paciente para obtener una clasificación automática de riesgo oncológico</p>
     </div>""", unsafe_allow_html=True)
 
@@ -1293,28 +1306,7 @@ def page_trabajador():
         </div>""", unsafe_allow_html=True)
 
 
-# ─────────────────────────────────────────────────────────────
-# NUTRICIÓN ONCOLÓGICA
-# ─────────────────────────────────────────────────────────────
-def page_nutricion():
-    with st.sidebar:
-        st.markdown("## ALDIMI-PREDICT")
-        st.markdown("**Nutrición Oncológica**")
-        st.markdown("---")
-        _sidebar_back(key="back_nut")
-        st.markdown("---")
-        st.markdown("### Configuración")
-        n_bajo  = st.number_input("Pacientes Bajo riesgo",  0, 9999, 10,  step=1)
-        n_medio = st.number_input("Pacientes Medio riesgo", 0, 9999, 8,   step=1)
-        n_alto  = st.number_input("Pacientes Alto riesgo",  0, 9999, 5,   step=1)
-        st.caption("↵ Presiona Enter para aplicar")
-        dias    = st.selectbox("Período", ["7 días","14 días","30 días"])
-        dias_n  = int(dias.split()[0])
-        st.markdown("---")
-        st.markdown(f"**Total pacientes:** {n_bajo+n_medio+n_alto}")
-        st.markdown(f"**Total días-paciente:** {(n_bajo+n_medio+n_alto)*dias_n:,}")
-        st.sidebar.caption("ML 1ACC0057 · UPC 2025")
-
+def _render_usuario_nutricion(n_bajo, n_medio, n_alto, dias, dias_n):
     st.markdown("""
     <div class="page-header nutricion">
         <h1>🍽️ Nutrición Oncológica — Modelo Combinado</h1>
@@ -1530,14 +1522,71 @@ def page_nutricion():
                 mime="application/json", use_container_width=True)
 
 
+def page_usuario():
+    if "usuario_sub" not in st.session_state:
+        st.session_state.usuario_sub = "clasificacion"
+
+    OPCIONES_SUB = ["🔬 Clasificación de Pacientes", "🍽️ Nutrición Oncológica"]
+
+    with st.sidebar:
+        st.markdown("## ALDIMI-PREDICT")
+        st.markdown("**Vista Usuario**")
+        st.markdown("---")
+        _sidebar_back(key="back_usr")
+        st.markdown("---")
+        idx = 0 if st.session_state.usuario_sub == "clasificacion" else 1
+        sel = st.radio("Sección", OPCIONES_SUB, index=idx, key="usuario_sub_radio")
+        st.session_state.usuario_sub = "clasificacion" if sel == OPCIONES_SUB[0] else "nutricion"
+        st.markdown("---")
+
+        if st.session_state.usuario_sub == "clasificacion":
+            data = load_and_train_salud()
+            st.markdown("### Datos del Paciente")
+            age     = st.slider("Edad",20,90,50)
+            gender  = st.selectbox("Género",GENDERS)
+            country = st.selectbox("País / Región",COUNTRIES)
+            year    = st.selectbox("Año diagnóstico",list(range(2015,2026)),index=10)
+            st.markdown("#### Factores de Riesgo (0–10)")
+            gen_risk = st.slider("Riesgo Genético",   0.0,10.0,5.0,0.1)
+            air_poll = st.slider("Contaminación Aire",0.0,10.0,5.0,0.1)
+            alcohol  = st.slider("Consumo Alcohol",   0.0,10.0,5.0,0.1)
+            smoking  = st.slider("Tabaquismo",        0.0,10.0,5.0,0.1)
+            obesity  = st.slider("Nivel Obesidad",    0.0,10.0,5.0,0.1)
+            st.markdown("#### Datos Clínicos")
+            cancer_type  = st.selectbox("Tipo de Cáncer",CANCER_TYPES)
+            cancer_stage = st.selectbox("Etapa del Cáncer",CANCER_STAGES)
+            cost         = st.number_input("Costo tratamiento (USD)",0,500000,52000,step=1000)
+            survival     = st.slider("Años supervivencia",0.0,20.0,5.0,0.5)
+            st.markdown("---")
+            btn_cls = st.button("🔍 Clasificar Paciente",use_container_width=True)
+        else:
+            st.markdown("### Configuración")
+            n_bajo  = st.number_input("Pacientes Bajo riesgo",  0, 9999, 10,  step=1)
+            n_medio = st.number_input("Pacientes Medio riesgo", 0, 9999, 8,   step=1)
+            n_alto  = st.number_input("Pacientes Alto riesgo",  0, 9999, 5,   step=1)
+            st.caption("↵ Presiona Enter para aplicar")
+            dias    = st.selectbox("Período", ["7 días","14 días","30 días"])
+            dias_n  = int(dias.split()[0])
+            st.markdown("---")
+            st.markdown(f"**Total pacientes:** {n_bajo+n_medio+n_alto}")
+            st.markdown(f"**Total días-paciente:** {(n_bajo+n_medio+n_alto)*dias_n:,}")
+
+        st.sidebar.caption("ML 1ACC0057 · UPC 2025")
+
+    if st.session_state.usuario_sub == "clasificacion":
+        _render_usuario_clasificacion(data, age, gender, country, year, gen_risk, air_poll,
+                                       alcohol, smoking, obesity, cancer_type, cancer_stage,
+                                       cost, survival, btn_cls)
+    else:
+        _render_usuario_nutricion(n_bajo, n_medio, n_alto, dias, dias_n)
+
+
 # ─────────────────────────────────────────────────────────────
 # ROUTER
 # ─────────────────────────────────────────────────────────────
 v = st.session_state.vista
-if   v == "landing":       page_landing()
-elif v == "dev_logistica":  page_dev_logistica()
-elif v == "dev_salud":      page_dev_salud()
-elif v == "trabajador":     page_trabajador()
-elif v == "nutricion":      page_nutricion()
+if   v == "landing":   page_landing()
+elif v == "developer": page_developer()
+elif v == "usuario":   page_usuario()
 else:
     st.session_state.vista = "landing"; st.rerun()

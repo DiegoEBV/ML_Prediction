@@ -280,31 +280,35 @@ def _get_gcs_client():
 
 
 def upload_all_models(local_dir: str = "models") -> list[tuple[str, bool, str]]:
-    """Sube todos los .pkl del directorio local a GCS. Devuelve lista de (nombre, ok, msg)."""
+    """Sube todos los .pkl del directorio local (incluyendo subcarpetas, p.ej.
+    favorita_modelos/) a GCS preservando la estructura. Devuelve lista de (nombre, ok, msg)."""
     gcs, err = _get_gcs_client()
     if err:
         return [(local_dir, False, err)]
     results = []
     try:
         bucket = gcs.bucket(GCS_BUCKET)
-        for fname in os.listdir(local_dir):
-            if not fname.endswith(".pkl"):
-                continue
-            local_path = os.path.join(local_dir, fname)
-            blob_name  = f"{GCS_PREFIX}/{fname}"
-            try:
-                blob = bucket.blob(blob_name)
-                blob.upload_from_filename(local_path)
-                results.append((fname, True, f"gs://{GCS_BUCKET}/{blob_name}"))
-            except Exception as e:
-                results.append((fname, False, str(e)))
+        for root, _, files in os.walk(local_dir):
+            for fname in files:
+                if not fname.endswith(".pkl"):
+                    continue
+                local_path = os.path.join(root, fname)
+                rel_path   = os.path.relpath(local_path, local_dir).replace(os.sep, "/")
+                blob_name  = f"{GCS_PREFIX}/{rel_path}"
+                try:
+                    blob = bucket.blob(blob_name)
+                    blob.upload_from_filename(local_path)
+                    results.append((rel_path, True, f"gs://{GCS_BUCKET}/{blob_name}"))
+                except Exception as e:
+                    results.append((rel_path, False, str(e)))
     except Exception as e:
         results.append((local_dir, False, str(e)))
     return results
 
 
 def sync_models_from_gcs(local_dir: str = "models") -> list[tuple[str, bool, str]]:
-    """Descarga .pkl desde GCS al directorio local. Devuelve lista de (nombre, ok, msg)."""
+    """Descarga .pkl desde GCS al directorio local, preservando subcarpetas
+    (p.ej. favorita_modelos/). Devuelve lista de (nombre, ok, msg)."""
     gcs, err = _get_gcs_client()
     if err:
         return [(local_dir, False, err)]
@@ -316,13 +320,14 @@ def sync_models_from_gcs(local_dir: str = "models") -> list[tuple[str, bool, str
         for blob in blobs:
             if not blob.name.endswith(".pkl"):
                 continue
-            fname      = os.path.basename(blob.name)
-            local_path = os.path.join(local_dir, fname)
+            rel_path   = blob.name[len(GCS_PREFIX) + 1:]
+            local_path = os.path.join(local_dir, *rel_path.split("/"))
             try:
+                os.makedirs(os.path.dirname(local_path), exist_ok=True)
                 blob.download_to_filename(local_path)
-                results.append((fname, True, local_path))
+                results.append((rel_path, True, local_path))
             except Exception as e:
-                results.append((fname, False, str(e)))
+                results.append((rel_path, False, str(e)))
     except Exception as e:
         results.append((local_dir, False, str(e)))
     return results
